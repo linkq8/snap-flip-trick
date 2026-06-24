@@ -46,7 +46,7 @@
   const STILL_RATE = 16;    // deg/s below which the phone counts as "still"
   const FLAT_GZ = 7.8;      // m/s² — z-gravity magnitude meaning "lying flat"
   const FLAT_XY = 4.2;      // m/s² — max in-plane gravity that still counts as flat
-  const GRAV_A = 0.5;       // gravity smoothing (EMA)
+  const GRAV_A = 0.7;       // gravity smoothing (EMA) — higher = less lag, fires nearer the true tilt angle
   const G = 9.81;
   const DRAW_MS = 110;      // reveal draw duration — as fast as possible
 
