@@ -21,9 +21,9 @@
   const debugBox = $("debug");
 
   // ===== Settings (persisted locally) =====
-  const STORE_KEY = "snapflip.config.v2";
+  const STORE_KEY = "snapflip.config.v3";
   const DEFAULTS = {
-    threshold: 60, // integrated lift rotation (degrees) needed to lock the number
+    threshold: 20, // integrated lift rotation (degrees) to lock the number — low = very fast reveal
     mapping: { "beta+": 1, "beta-": 2, "gamma+": 4, "gamma-": 3 },
   };
   let config = loadConfig();
@@ -242,7 +242,7 @@
   // ===== Reveal (draw) =====
   function reveal(number) {
     setDigit(revealPath, revealG, number);
-    animateDraw(revealPath, penTip, 760);
+    animateDraw(revealPath, penTip, 240); // very fast — number appears almost instantly on lift
   }
 
   // ===== Practice mode =====

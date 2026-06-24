@@ -6,11 +6,14 @@
 
 // Handwriting-style paths (Snap-pen look). Coordinates ~0..100 wide, 0..160 tall.
 const DIGIT_PATHS = {
-  1: "M28,50 Q42,33 52,27 L52,142",
-  2: "M22,55 Q28,26 54,30 Q84,35 70,68 Q58,95 24,140 L84,138",
-  3: "M24,46 Q50,20 74,42 Q92,60 58,80 Q94,90 80,122 Q58,152 24,128",
-  // Digit 4: two strokes (diagonal + crossbar, then the vertical stem)
-  4: "M72,24 L26,104 L92,104 M70,52 L64,150",
+  // hook up to a peak, long downstroke, plus a short base serif (2nd subpath)
+  1: "M30,64 Q41,40 52,30 Q57,26 55,44 L52,150 M28,151 Q45,143 63,150",
+  // round top, diagonal sweep down, flat base flicking up to the right
+  2: "M22,56 Q30,26 56,32 Q82,38 64,70 Q48,98 26,138 L86,131",
+  // pointed top, two stacked curves open on the left
+  3: "M26,50 Q46,23 73,40 Q96,54 59,79 Q98,88 80,122 Q58,155 25,126",
+  // open 4: slanted left stroke + crossbar, then a long vertical stem (2nd subpath)
+  4: "M60,54 L24,107 L98,99 M68,28 L70,152",
 };
 
 /**

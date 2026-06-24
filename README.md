@@ -37,10 +37,8 @@ magician wrote it with the Snapchat pen.
   Detected: N*. Rehearse the real motion: lay it flat, wait for "Armed", then lift from an edge.
 - Shows live: the β/γ rotation values, which edge was detected, and the resulting number.
 - Remap any edge from the dropdowns; reassign as needed for your device.
-- Adjust **Sensitivity (threshold)**: lower = locks earlier in the lift, higher = needs a more
-  decisive lift.
-- Tip: a threshold of ~60° locks the number partway through the lift, so the digit is ready before
-  the screen faces you.
+- Adjust **Speed (threshold)**: lower = the number appears almost instantly with a small lift,
+  higher = needs a more decisive lift. Default is **20°** for a near-instant reveal.
 
 ---
 
