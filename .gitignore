@@ -1,0 +1,5 @@
+# Local dev tooling (Claude Code preview helpers)
+.claude/
+
+# OS files
+.DS_Store

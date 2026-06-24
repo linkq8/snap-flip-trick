@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Snapchat</title>
+
+  <!-- PWA / iOS fullscreen -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Snapchat" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= START / PERMISSION SCREEN ================= -->
+  <section id="start-screen" class="screen active">
+    <div class="start-inner">
+      <div class="start-logo">
+        <svg viewBox="0 0 64 64" width="84" height="84" aria-hidden="true">
+          <path d="M32 6c-7 0-12 5-12 13 0 3 0 5-1 7-2 2-5 2-6 4 0 2 3 3 5 4-1 3-4 6-9 7 0 2 4 3 8 3 1 2 1 4 3 4 2 0 4-2 5-2 2 0 4 1 5 2 2 1 4 1 6 0 1-1 3-2 5-2 1 0 3 2 5 2 2 0 2-2 3-4 4 0 8-1 8-3-5-1-8-4-9-7 2-1 5-2 5-4-1-2-4-2-6-4-1-2-1-4-1-7 0-8-5-13-12-13z" fill="#000"/>
+        </svg>
+      </div>
+      <h1 class="start-title">Tap to start</h1>
+      <p class="start-sub">Tap anywhere to allow Camera &amp; Motion</p>
+      <button id="start-btn" class="start-btn">▶</button>
+      <p id="start-error" class="start-error" hidden></p>
+    </div>
+  </section>
+
+  <!-- ================= LIVE CAMERA SCREEN ================= -->
+  <section id="camera-screen" class="screen">
+    <video id="video" playsinline autoplay muted></video>
+
+    <!-- top bar -->
+    <div class="top-bar safe-top">
+      <button class="icon-btn profile-btn" aria-label="profile">
+        <span class="profile-circle"></span>
+      </button>
+      <div class="top-search"><span>🔍 Search</span></div>
+      <div class="top-right">
+        <button class="icon-btn" id="flash-btn" aria-label="flash">⚡</button>
+        <button class="icon-btn" aria-label="more">⋯</button>
+      </div>
+    </div>
+
+    <!-- side rail (decorative) -->
+    <div class="side-rail">
+      <button class="rail-btn" aria-label="emoji">😀</button>
+      <button class="rail-btn" aria-label="memories">🗂️</button>
+      <button class="rail-btn" aria-label="effects">✨</button>
+    </div>
+
+    <!-- bottom: shutter -->
+    <div class="bottom-bar safe-bottom">
+      <button class="thumb-btn" aria-label="memories"></button>
+      <button id="capture-btn" class="capture-btn" aria-label="capture"><span></span></button>
+      <button id="flip-cam-btn" class="flip-btn" aria-label="flip camera">🔄</button>
+    </div>
+
+    <!-- secret long-press hotspot to open Practice Mode (transparent) -->
+    <div id="secret-hotspot" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= POST-CAPTURE SCREEN ================= -->
+  <section id="capture-screen" class="screen">
+    <canvas id="photo"></canvas>
+
+    <!-- handwriting reveal layer -->
+    <svg id="reveal" viewBox="0 0 300 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g id="reveal-g">
+        <path id="reveal-path" fill="none" stroke="#FFFC00" stroke-width="13"
+              stroke-linecap="round" stroke-linejoin="round" />
+        <circle id="pen-tip" r="7.5" fill="#FFFC00" opacity="0" />
+      </g>
+    </svg>
+
+    <!-- close button -->
+    <button id="close-capture" class="close-btn safe-top" aria-label="close">✕</button>
+
+    <!-- edit rail (decorative) -->
+    <div class="edit-rail safe-top">
+      <button class="rail-btn" aria-label="text">T</button>
+      <button class="rail-btn" aria-label="draw">✎</button>
+      <button class="rail-btn" aria-label="sticker">🙂</button>
+      <button class="rail-btn" aria-label="scissors">✂️</button>
+      <button class="rail-btn" aria-label="save">⬇️</button>
+    </div>
+
+    <!-- send button (decorative) -->
+    <div class="send-bar safe-bottom">
+      <button class="send-btn">Send To <span class="send-arrow">➤</span></button>
+    </div>
+
+    <!-- secret long-press hotspot during the show -->
+    <div id="secret-hotspot-2" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= PRACTICE / SETTINGS PANEL ================= -->
+  <section id="practice-panel" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <h2>Practice Mode</h2>
+        <button id="practice-close" class="panel-x" aria-label="close">✕</button>
+      </div>
+
+      <p class="panel-note">Move the phone to see the detected direction and number live. This screen is secret — never show it to the audience.</p>
+
+      <div class="live-box">
+        <div class="live-num" id="live-num">—</div>
+        <div class="live-meta">
+          <div>Direction: <b id="live-bucket">—</b></div>
+          <div>β (fwd/back): <b id="live-beta">0</b>°</div>
+          <div>γ (left/right): <b id="live-gamma">0</b>°</div>
+        </div>
+      </div>
+
+      <h3>Direction → Number map</h3>
+      <div class="map-grid" id="map-grid">
+        <div class="map-row" data-bucket="beta+"><span>Tilt top edge away (forward)</span><select data-bucket="beta+"></select></div>
+        <div class="map-row" data-bucket="beta-"><span>Tilt top edge toward you (back)</span><select data-bucket="beta-"></select></div>
+        <div class="map-row" data-bucket="gamma+"><span>Tilt right</span><select data-bucket="gamma+"></select></div>
+        <div class="map-row" data-bucket="gamma-"><span>Tilt left</span><select data-bucket="gamma-"></select></div>
+      </div>
+
+      <h3>Sensitivity (threshold)</h3>
+      <div class="slider-row">
+        <input type="range" id="threshold" min="35" max="140" step="5" />
+        <span id="threshold-val">65</span>°
+      </div>
+
+      <div class="panel-actions">
+        <button id="reset-defaults" class="ghost-btn">Reset to defaults</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEBUG OVERLAY (desktop only) ================= -->
+  <div id="debug" class="debug" hidden></div>
+
+  <script src="digits.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
