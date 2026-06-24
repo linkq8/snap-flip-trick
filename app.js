@@ -1,18 +1,17 @@
 /*
- * app.js — the trick's logic
- * Flow: capture a "photo" → lay the phone face-down & still for 2s (arms silently)
- *       → lift it up from one edge → the lift edge picks a number 1–4, drawn by hand.
+ * app.js — the trick's logic (gravity-based, calibratable)
+ * Flow: capture → lay the phone face-down & still ~2s (arms) → lift from one edge.
+ * Which edge you lift is detected from the GRAVITY tilt direction (absolute & reliable),
+ * then mapped to a number 1–4 and drawn instantly.
+ *
+ * Because gravity axis signs differ per device/orientation, a one-time guided
+ * Calibration learns the correct edge→number mapping for THIS phone.
  */
 (function () {
   "use strict";
 
-  // ===== Element refs =====
   const $ = (id) => document.getElementById(id);
-  const screens = {
-    start: $("start-screen"),
-    camera: $("camera-screen"),
-    capture: $("capture-screen"),
-  };
+  const screens = { start: $("start-screen"), camera: $("camera-screen"), capture: $("capture-screen") };
   const video = $("video");
   const photo = $("photo");
   const revealPath = $("reveal-path");
@@ -20,11 +19,12 @@
   const penTip = $("pen-tip");
   const debugBox = $("debug");
 
-  // ===== Settings (persisted locally) =====
-  const STORE_KEY = "snapflip.config.v3";
+  // ===== Settings (persisted) =====
+  const STORE_KEY = "snapflip.config.v4";
   const DEFAULTS = {
-    threshold: 20, // integrated lift rotation (degrees) to lock the number — low = very fast reveal
-    mapping: { "beta+": 1, "beta-": 2, "gamma+": 4, "gamma-": 3 },
+    tiltDeg: 10, // lift tilt (degrees) that triggers the reveal — low = very fast
+    // best-guess default; the Calibrate flow overwrites these with correct values for the device
+    mapping: { "ay-": 1, "ax+": 2, "ay+": 3, "ax-": 4 },
   };
   let config = loadConfig();
 
@@ -33,40 +33,45 @@
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const c = JSON.parse(raw);
-        return {
-          threshold: c.threshold || DEFAULTS.threshold,
-          mapping: Object.assign({}, DEFAULTS.mapping, c.mapping || {}),
-        };
+        return { tiltDeg: c.tiltDeg || DEFAULTS.tiltDeg, mapping: Object.assign({}, DEFAULTS.mapping, c.mapping || {}) };
       }
     } catch (e) {}
     return JSON.parse(JSON.stringify(DEFAULTS));
   }
-  function saveConfig() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(config)); } catch (e) {}
-  }
+  function saveConfig() { try { localStorage.setItem(STORE_KEY, JSON.stringify(config)); } catch (e) {} }
 
-  // ===== Tuning constants for the "settle then lift" detector =====
-  const SETTLE_MS = 2000;   // must stay face-down & still this long to arm
-  const STILL_RATE = 12;    // deg/s — below this counts as "still"
-  const FLAT_GZ = 8.5;      // m/s² — z-gravity magnitude that means "lying flat"
-  const FLAT_XY = 3.6;      // m/s² — max horizontal gravity that still counts as flat
+  // ===== Detector tuning =====
+  const SETTLE_MS = 2000;   // face-down + still time to arm (real performance)
+  const CALIB_SETTLE = 700; // shorter settle during calibration for speed
+  const STILL_RATE = 16;    // deg/s below which the phone counts as "still"
+  const FLAT_GZ = 7.8;      // m/s² — z-gravity magnitude meaning "lying flat"
+  const FLAT_XY = 4.2;      // m/s² — max in-plane gravity that still counts as flat
+  const GRAV_A = 0.5;       // gravity smoothing (EMA)
+  const G = 9.81;
+  const DRAW_MS = 110;      // reveal draw duration — as fast as possible
+
+  function tiltTrig() { return G * Math.sin(config.tiltDeg * Math.PI / 180); }
 
   // ===== State =====
-  let stream = null;
-  let currentFacing = "environment";
-  let detectMode = "idle";  // 'idle' | 'waiting' (settling) | 'armed' (integrating lift)
-  let isPractice = false;   // detection is for the practice display, not a real reveal
-  let practiceOpen = false;
-  let locked = false;       // locked — don't reveal twice
-  let stillSince = null;    // timestamp when the face-down stillness began
-  let accB = 0, accG = 0;   // integrated rotation around x (beta) and y (gamma)
-  let lastNow = null;
-  let lastBucket = "—";
+  let stream = null, currentFacing = "environment";
+  let detectMode = "idle"; // 'idle' | 'waiting' | 'armed'
+  let isPractice = false, practiceOpen = false, locked = false;
+  let stillSince = null, lastNow = null, lastBucket = "—";
+  let gxf = 0, gyf = 0, gzf = 0, gravInit = false; // smoothed gravity
+  let gxBase = 0, gyBase = 0;                       // gravity baseline at arm time
   let wakeLock = null;
+
+  // Calibration
+  const CALIB_STEPS = [
+    { num: 1, label: "the TOP edge" },
+    { num: 2, label: "the POWER BUTTON side (right)" },
+    { num: 3, label: "the CHARGING PORT side (bottom)" },
+    { num: 4, label: "the VOLUME BUTTONS side (left)" },
+  ];
+  let calibrating = false, calibStep = 0, calibMap = {};
 
   const DEBUG = /[?&]debug/.test(location.search);
 
-  // ===== Screen management =====
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
     screens[name].classList.add("active");
@@ -75,18 +80,13 @@
   // ===== Start + permissions =====
   async function startApp() {
     $("start-error").hidden = true;
-    // 1) Motion permission first (must be inside a user gesture on iOS)
     await requestMotionPermission();
     attachMotionListeners();
-    // 2) Camera permission
-    try {
-      await startCamera(currentFacing);
-    } catch (e) {
+    try { await startCamera(currentFacing); }
+    catch (e) {
       const err = $("start-error");
       err.hidden = false;
-      err.textContent =
-        "Couldn't start the camera. Make sure the page is opened over HTTPS and camera access is allowed. (" +
-        (e && e.name ? e.name : e) + ")";
+      err.textContent = "Couldn't start the camera. Open the page over HTTPS and allow camera access. (" + (e && e.name ? e.name : e) + ")";
       return;
     }
     requestWakeLock();
@@ -95,77 +95,54 @@
 
   async function requestMotionPermission() {
     try {
-      if (typeof DeviceMotionEvent !== "undefined" &&
-          typeof DeviceMotionEvent.requestPermission === "function") {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
         const r = await DeviceMotionEvent.requestPermission();
-        if (typeof DeviceOrientationEvent !== "undefined" &&
-            typeof DeviceOrientationEvent.requestPermission === "function") {
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
           try { await DeviceOrientationEvent.requestPermission(); } catch (e) {}
         }
         return r === "granted";
       }
-      return true; // browsers that don't require an explicit prompt
-    } catch (e) {
-      return false;
-    }
+      return true;
+    } catch (e) { return false; }
   }
-
-  function attachMotionListeners() {
-    window.addEventListener("devicemotion", onMotion, true);
-  }
+  function attachMotionListeners() { window.addEventListener("devicemotion", onMotion, true); }
 
   // ===== Camera =====
   async function startCamera(facing) {
     if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
     stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false, video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
     });
     video.srcObject = stream;
     currentFacing = facing;
-    video.style.transform = facing === "user" ? "scaleX(-1)" : "none"; // mirror front cam
+    video.style.transform = facing === "user" ? "scaleX(-1)" : "none";
     await video.play().catch(() => {});
   }
-
-  function flipCamera() {
-    startCamera(currentFacing === "environment" ? "user" : "environment").catch(() => {});
-  }
+  function flipCamera() { startCamera(currentFacing === "environment" ? "user" : "environment").catch(() => {}); }
 
   // ===== Capture =====
   function capturePhoto() {
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) return;
-    photo.width = vw;
-    photo.height = vh;
+    photo.width = vw; photo.height = vh;
     const ctx = photo.getContext("2d");
     ctx.save();
     if (currentFacing === "user") { ctx.translate(vw, 0); ctx.scale(-1, 1); }
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.restore();
-
-    // Begin the "settle face-down, then lift" detection cycle
     clearDraw(revealPath, penTip);
     beginWaiting(false);
     show("capture");
   }
-
   function closeCapture() {
-    detectMode = "idle";
-    locked = false;
-    isPractice = false;
+    detectMode = "idle"; locked = false; isPractice = false;
     clearDraw(revealPath, penTip);
     show("camera");
   }
 
-  // ===== Detection: settle (face-down + still 2s) → lift edge =====
-  function resetAccum() { accB = 0; accG = 0; lastNow = null; }
-
+  // ===== Detection (gravity tilt) =====
   function beginWaiting(practice) {
-    detectMode = "waiting";
-    isPractice = practice;
-    locked = false;
-    stillSince = null;
-    resetAccum();
+    detectMode = "waiting"; isPractice = practice; locked = false; stillSince = null;
     if (practiceOpen) setStateText("place");
   }
 
@@ -176,244 +153,227 @@
     if (dt <= 0 || dt > 0.5) dt = (e.interval && e.interval > 0) ? e.interval : 0.016;
 
     const rr = e.rotationRate || {};
-    const rb = rr.beta || 0;   // rotation around x (lift from top/bottom edge)
-    const rg = rr.gamma || 0;  // rotation around y (lift from left/right edge)
-    const ra = rr.alpha || 0;  // rotation around z
+    const angSpeed = Math.max(Math.abs(rr.beta || 0), Math.abs(rr.gamma || 0), Math.abs(rr.alpha || 0));
 
     const ag = e.accelerationIncludingGravity || {};
-    const gx = ag.x || 0, gy = ag.y || 0, gz = ag.z || 0;
+    let gx = ag.x || 0, gy = ag.y || 0, gz = ag.z || 0;
+    if (!gravInit) { gxf = gx; gyf = gy; gzf = gz; gravInit = true; }
+    else { gxf = GRAV_A * gx + (1 - GRAV_A) * gxf; gyf = GRAV_A * gy + (1 - GRAV_A) * gyf; gzf = GRAV_A * gz + (1 - GRAV_A) * gzf; }
 
-    const angSpeed = Math.max(Math.abs(rb), Math.abs(rg), Math.abs(ra));
+    const haveGrav = !(gx === 0 && gy === 0 && gz === 0);
     const isStill = angSpeed < STILL_RATE;
-    let isFlat = Math.abs(gz) >= FLAT_GZ && Math.hypot(gx, gy) <= FLAT_XY;
-    if (gx === 0 && gy === 0 && gz === 0) isFlat = true; // gravity unavailable → degrade to stillness only
-
-    // Integrate rotation (used to detect the lift); decay while still to avoid drift
-    accB += rb * dt;
-    accG += rg * dt;
-    if (angSpeed < 6) { accB *= 0.85; accG *= 0.85; }
+    const isFlat = haveGrav ? (Math.abs(gzf) >= FLAT_GZ && Math.hypot(gxf, gyf) <= FLAT_XY) : isStill;
 
     if (practiceOpen) updateLive();
     if (DEBUG) updateDebug();
 
-    // Phase 1: wait for the phone to lie face-down and still for SETTLE_MS, then arm
+    const settleNeeded = calibrating ? CALIB_SETTLE : SETTLE_MS;
+
+    // Phase 1: settle face-down & still, then arm (record gravity baseline)
     if (detectMode === "waiting") {
       if (isFlat && isStill) {
         if (stillSince == null) stillSince = now;
         const held = now - stillSince;
-        if (practiceOpen) setStateText("hold", held);
-        if (held >= SETTLE_MS) {
-          detectMode = "armed";
-          resetAccum();           // start integrating the lift from zero
-          stillSince = null;
+        if (practiceOpen) setStateText("hold", held, settleNeeded);
+        if (held >= settleNeeded) {
+          detectMode = "armed"; gxBase = gxf; gyBase = gyf; stillSince = null;
           if (practiceOpen) setStateText("ready");
         }
-      } else {
-        stillSince = null;
-        if (practiceOpen) setStateText("place");
-      }
+      } else { stillSince = null; if (practiceOpen) setStateText("place"); }
       return;
     }
 
-    // Phase 2: armed — the first decisive lift direction picks the number
+    // Phase 2: armed — the first decisive tilt direction picks the edge
     if (detectMode !== "armed" || locked) return;
-    const aB = Math.abs(accB), aG = Math.abs(accG);
-    if (Math.max(aB, aG) >= config.threshold) {
-      const bucket = aB >= aG ? ("beta" + (accB > 0 ? "+" : "-"))
-                              : ("gamma" + (accG > 0 ? "+" : "-"));
+    const dx = gxf - gxBase, dy = gyf - gyBase;
+    if (Math.hypot(dx, dy) >= tiltTrig()) {
+      const bucket = Math.abs(dx) >= Math.abs(dy) ? ("ax" + (dx > 0 ? "+" : "-")) : ("ay" + (dy > 0 ? "+" : "-"));
       lastBucket = bucket;
-      fire(bucket, config.mapping[bucket]);
+      fire(bucket);
     }
   }
 
-  function fire(bucket, number) {
+  function fire(bucket) {
     locked = true;
+    if (calibrating) { recordCalib(bucket); return; }
+    const number = config.mapping[bucket];
     if (isPractice) {
       showPracticeResult(bucket, number);
       setStateText("detected", number);
-      // reset for another rehearsal rep
-      setTimeout(() => { if (practiceOpen) beginWaiting(true); }, 1300);
+      setTimeout(() => { if (practiceOpen && !calibrating) beginWaiting(true); }, 1100);
     } else {
       reveal(number);
       detectMode = "idle";
     }
   }
 
-  // ===== Reveal (draw) =====
+  // ===== Reveal =====
   function reveal(number) {
     setDigit(revealPath, revealG, number);
-    animateDraw(revealPath, penTip, 240); // very fast — number appears almost instantly on lift
+    animateDraw(revealPath, penTip, DRAW_MS);
+  }
+
+  // ===== Guided calibration =====
+  function startCalibration() {
+    calibrating = true; calibStep = 0; calibMap = {};
+    $("calib-area").hidden = false;
+    $("calib-btn").hidden = true;
+    updateCalibUI();
+    beginWaiting(false);
+  }
+  function cancelCalibration() {
+    calibrating = false;
+    $("calib-area").hidden = true;
+    $("calib-btn").hidden = false;
+    beginWaiting(true);
+  }
+  function recordCalib(bucket) {
+    const step = CALIB_STEPS[calibStep];
+    calibMap[bucket] = step.num;
+    $("calib-instr").textContent = "✓ Got it — that edge = " + step.num;
+    calibStep++;
+    if (calibStep >= CALIB_STEPS.length) {
+      config.mapping = Object.assign({}, DEFAULTS.mapping, calibMap);
+      saveConfig();
+      calibrating = false;
+      $("calib-step").textContent = "Done ✓";
+      $("calib-instr").textContent = "Calibrated! All four edges are set for your phone.";
+      setTimeout(() => { $("calib-area").hidden = true; $("calib-btn").hidden = false; beginWaiting(true); }, 1600);
+    } else {
+      setTimeout(() => { updateCalibUI(); beginWaiting(false); }, 850);
+    }
+  }
+  function updateCalibUI() {
+    const step = CALIB_STEPS[calibStep];
+    $("calib-step").textContent = "Step " + (calibStep + 1) + " / 4";
+    $("calib-instr").textContent = "Lay face-down & still, then lift from " + step.label + " → " + step.num;
   }
 
   // ===== Practice mode =====
   function openPractice() {
     practiceOpen = true;
+    $("calib-area").hidden = true; $("calib-btn").hidden = false;
     syncPracticeUI();
     beginWaiting(true);
     $("practice-panel").classList.add("active");
   }
   function closePractice() {
-    practiceOpen = false;
-    isPractice = false;
-    detectMode = "idle";
+    practiceOpen = false; isPractice = false; calibrating = false; detectMode = "idle";
     $("practice-panel").classList.remove("active");
   }
   function syncPracticeUI() {
-    document.querySelectorAll("#map-grid select").forEach((sel) => {
-      const bucket = sel.getAttribute("data-bucket");
-      sel.innerHTML = "";
-      [1, 2, 3, 4].forEach((n) => {
-        const opt = document.createElement("option");
-        opt.value = String(n);
-        opt.textContent = String(n);
-        if (config.mapping[bucket] === n) opt.selected = true;
-        sel.appendChild(opt);
-      });
-    });
-    $("threshold").value = config.threshold;
-    $("threshold-val").textContent = config.threshold;
+    $("threshold").value = config.tiltDeg;
+    $("threshold-val").textContent = config.tiltDeg;
   }
   function updateLive() {
-    $("live-beta").textContent = Math.round(accB);
-    $("live-gamma").textContent = Math.round(accG);
-    const aB = Math.abs(accB), aG = Math.abs(accG);
+    const dx = gxf - gxBase, dy = gyf - gyBase;
+    $("live-gx").textContent = (detectMode === "armed" ? dx : 0).toFixed(1);
+    $("live-gy").textContent = (detectMode === "armed" ? dy : 0).toFixed(1);
     let predicted = "—";
-    if (Math.max(aB, aG) > 6) {
-      predicted = aB >= aG ? ("beta" + (accB > 0 ? "+" : "-"))
-                           : ("gamma" + (accG > 0 ? "+" : "-"));
+    if (detectMode === "armed" && Math.hypot(dx, dy) > 1.2) {
+      predicted = Math.abs(dx) >= Math.abs(dy) ? ("ax" + (dx > 0 ? "+" : "-")) : ("ay" + (dy > 0 ? "+" : "-"));
     }
     $("live-bucket").textContent = predicted;
   }
   function showPracticeResult(bucket, number) {
-    $("live-num").textContent = number;
+    $("live-num").textContent = number != null ? number : "?";
     $("live-bucket").textContent = bucket;
   }
-  function setStateText(kind, val) {
+  function setStateText(kind, val, need) {
     const el = $("live-state");
     if (!el) return;
     el.classList.remove("ready");
-    if (kind === "place") {
-      el.textContent = "Lay the phone face-down and hold still…";
-    } else if (kind === "hold") {
-      el.textContent = "Holding still… " + (val / 1000).toFixed(1) + "s / 2.0s";
-    } else if (kind === "ready") {
-      el.textContent = "Armed — lift from one edge!";
-      el.classList.add("ready");
-    } else if (kind === "detected") {
-      el.textContent = "Detected: " + val + "  (resetting…)";
-    }
+    if (kind === "place") el.textContent = "Lay the phone face-down and hold still…";
+    else if (kind === "hold") el.textContent = "Holding still… " + (val / 1000).toFixed(1) + "s / " + (need / 1000).toFixed(1) + "s";
+    else if (kind === "ready") { el.textContent = "Armed — lift from an edge!"; el.classList.add("ready"); }
+    else if (kind === "detected") el.textContent = "Detected: " + (val != null ? val : "?");
   }
 
-  // ===== Debug mode (desktop) =====
+  // ===== Debug =====
   function updateDebug() {
     if (!debugBox) return;
     debugBox.hidden = false;
+    const dx = gxf - gxBase, dy = gyf - gyBase;
     debugBox.textContent =
-      "accβ=" + accB.toFixed(0) + "  accγ=" + accG.toFixed(0) +
-      "\nmode=" + detectMode + "  practice=" + isPractice + "  locked=" + locked +
-      "\nthreshold=" + config.threshold + "  lastBucket=" + lastBucket +
-      "\nmap " + JSON.stringify(config.mapping);
+      "gx=" + gxf.toFixed(1) + " gy=" + gyf.toFixed(1) + " gz=" + gzf.toFixed(1) +
+      "\ndx=" + dx.toFixed(1) + " dy=" + dy.toFixed(1) + " trig=" + tiltTrig().toFixed(1) +
+      "\nmode=" + detectMode + " calib=" + calibrating + " locked=" + locked +
+      "\nlastBucket=" + lastBucket + " map=" + JSON.stringify(config.mapping);
   }
   function debugFakeCapture() {
     photo.width = 375; photo.height = 812;
-    const ctx = photo.getContext("2d");
-    const g = ctx.createLinearGradient(0, 0, 0, 812);
-    g.addColorStop(0, "#3a7bd5"); g.addColorStop(1, "#3a6073");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, 375, 812);
+    const ctx = photo.getContext("2d"); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 375, 812);
     clearDraw(revealPath, penTip);
     beginWaiting(false);
     show("capture");
   }
   function simulateBucket(bucket) {
     lastBucket = bucket;
-    const number = config.mapping[bucket];
-    if (detectMode === "waiting" || detectMode === "armed" || isPractice) {
-      detectMode = "armed"; // pretend the settle completed
-      locked = false;
-      fire(bucket, number);
-    }
+    detectMode = "armed"; locked = false;
+    fire(bucket);
     if (DEBUG) updateDebug();
   }
 
   // ===== Wake Lock =====
   async function requestWakeLock() {
-    try {
-      if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
-    } catch (e) {}
+    try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
   }
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && screens.camera.classList.contains("active")) {
-      requestWakeLock();
-    }
+    if (document.visibilityState === "visible" && screens.camera.classList.contains("active")) requestWakeLock();
   });
 
-  // ===== Secret gesture (long press) to open Practice Mode =====
+  // ===== Secret long-press =====
   function bindSecret(el) {
     if (!el) return;
     let timer = null;
-    const startPress = () => { timer = setTimeout(() => { openPractice(); }, 700); };
+    el.addEventListener("pointerdown", () => { timer = setTimeout(openPractice, 700); });
     const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-    el.addEventListener("pointerdown", startPress);
     el.addEventListener("pointerup", cancel);
     el.addEventListener("pointerleave", cancel);
     el.addEventListener("pointercancel", cancel);
   }
 
-  // ===== Wire up events =====
+  // ===== Events =====
   function bindEvents() {
     $("start-btn").addEventListener("click", startApp);
-    screens.start.addEventListener("click", (e) => {
-      if (e.target.id === "start-btn") return;
-      startApp();
-    });
-
+    screens.start.addEventListener("click", (e) => { if (e.target.id !== "start-btn") startApp(); });
     $("capture-btn").addEventListener("click", capturePhoto);
     $("flip-cam-btn").addEventListener("click", flipCamera);
     $("close-capture").addEventListener("click", closeCapture);
-
     bindSecret($("secret-hotspot"));
     bindSecret($("secret-hotspot-2"));
 
     $("practice-close").addEventListener("click", closePractice);
-    document.querySelectorAll("#map-grid select").forEach((sel) => {
-      sel.addEventListener("change", () => {
-        config.mapping[sel.getAttribute("data-bucket")] = parseInt(sel.value, 10);
-        saveConfig();
-      });
-    });
+    $("calib-btn").addEventListener("click", startCalibration);
+    $("calib-cancel").addEventListener("click", cancelCalibration);
     $("threshold").addEventListener("input", () => {
-      config.threshold = parseInt($("threshold").value, 10);
-      $("threshold-val").textContent = config.threshold;
+      config.tiltDeg = parseInt($("threshold").value, 10);
+      $("threshold-val").textContent = config.tiltDeg;
       saveConfig();
     });
     $("reset-defaults").addEventListener("click", () => {
-      config = JSON.parse(JSON.stringify(DEFAULTS));
-      saveConfig();
-      syncPracticeUI();
+      config = JSON.parse(JSON.stringify(DEFAULTS)); saveConfig(); syncPracticeUI();
     });
 
     if (DEBUG) {
       window.addEventListener("keydown", (e) => {
         const k = e.key;
-        if (k === "ArrowUp") simulateBucket("beta+");
-        else if (k === "ArrowDown") simulateBucket("beta-");
-        else if (k === "ArrowRight") simulateBucket("gamma+");
-        else if (k === "ArrowLeft") simulateBucket("gamma-");
+        if (k === "ArrowUp") simulateBucket("ay+");
+        else if (k === "ArrowDown") simulateBucket("ay-");
+        else if (k === "ArrowRight") simulateBucket("ax+");
+        else if (k === "ArrowLeft") simulateBucket("ax-");
         else if (k >= "1" && k <= "4") { detectMode = "idle"; locked = true; reveal(parseInt(k, 10)); }
         else if (k === "c" || k === "C") { video.videoWidth ? capturePhoto() : debugFakeCapture(); }
         else if (k === "x" || k === "X") closeCapture();
         else if (k === "p" || k === "P") { practiceOpen ? closePractice() : openPractice(); }
       });
-      attachMotionListeners(); // allow synthetic devicemotion events during desktop testing
+      attachMotionListeners();
       updateDebug();
     }
   }
 
-  // ===== Register service worker =====
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
-    });
+    window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
   }
 
   bindEvents();

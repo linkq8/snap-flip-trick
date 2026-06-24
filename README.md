@@ -14,31 +14,36 @@ magician wrote it with the Snapchat pen.
 2. Lay the phone **face-down** (screen against the table) and hold it **still for 2 seconds** —
    detection arms silently (nothing visible, since the screen is down).
 3. The audience says a number from **1 to 4** out loud.
-4. Lift the phone up **from the matching edge** — the edge you raise turns the screen back toward you
-   and selects the number, which is already drawn by the time you see the screen.
+4. Lift the phone up **from the matching edge** — the edge you raise selects the number, which is
+   already drawn by the time the screen faces you.
 
-### Default map (lift edge → number)
+Detection is **gravity-based** (it reads the tilt direction of the lift), which is far more reliable
+than reading rotation speed.
+
+### Map (lift edge → number)
 | Lift the phone up from… | Number |
 |-------------------------|--------|
 | the **top** edge | 1 |
-| the **bottom** edge | 2 |
-| the **right** edge | 4 |
-| the **left** edge | 3 |
+| the **power-button** side (right) | 2 |
+| the **charging-port** side (bottom) | 3 |
+| the **volume-buttons** side (left) | 4 |
 
-> Gyroscope axes can differ slightly between devices. **Use Practice Mode** to confirm which edge
-> maps to which number on your phone, and remap if needed.
+> ⚠️ **Calibrate once first.** Gravity-axis signs differ per device, so open Practice & Setup and tap
+> **Calibrate to my phone** — it walks you through 4 quick lifts and locks the mapping to your exact
+> phone. After that it just works.
 
 ---
 
-## Practice Mode (secret) 🛠️
+## Practice & Setup (secret) 🛠️
 - Open it with a **long press (~1s)** on the **bottom-left corner** of the screen (on the camera
   screen or after a capture).
-- A live state line walks you through it: *Lay face-down & still → Holding… 2.0s → Armed, lift! →
-  Detected: N*. Rehearse the real motion: lay it flat, wait for "Armed", then lift from an edge.
-- Shows live: the β/γ rotation values, which edge was detected, and the resulting number.
-- Remap any edge from the dropdowns; reassign as needed for your device.
-- Adjust **Speed (threshold)**: lower = the number appears almost instantly with a small lift,
-  higher = needs a more decisive lift. Default is **20°** for a near-instant reveal.
+- **Calibrate to my phone** — the main button. It runs 4 quick guided lifts (top, power side,
+  charging side, volume side) and stores the correct edge→number mapping for your device. Do this
+  once and the trick is reliable.
+- A live state line walks you through each lift: *Lay face-down & still → Holding… 2.0s → Armed,
+  lift! → Detected: N*.
+- Adjust **Reveal speed**: lower degrees = the number appears with a smaller, faster lift. Default
+  is **10°** for a near-instant reveal.
 
 ---
 

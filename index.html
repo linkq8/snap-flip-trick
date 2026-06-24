@@ -181,43 +181,51 @@
     <div id="secret-hotspot-2" class="secret-hotspot"></div>
   </section>
 
-  <!-- ================= PRACTICE / SETTINGS PANEL ================= -->
+  <!-- ================= PRACTICE / SETUP PANEL ================= -->
   <section id="practice-panel" class="panel">
     <div class="panel-card">
       <div class="panel-head">
-        <h2>Practice Mode</h2>
+        <h2>Practice &amp; Setup</h2>
         <button id="practice-close" class="panel-x" aria-label="close">✕</button>
       </div>
 
-      <p class="panel-note">Lay the phone face-down and hold still for 2s to arm, then lift it up from one edge — the edge you lift from picks the number. This screen is secret — never show it to the audience.</p>
+      <p class="panel-note">Lay the phone face-down, hold still ~2s to arm, then lift from one edge. Calibrate once so every edge maps to the right number on your exact phone. This screen is secret — never show it to the audience.</p>
+
+      <button id="calib-btn" class="primary-btn">🎯 Calibrate to my phone (4 quick lifts)</button>
+
+      <div id="calib-area" class="calib-area" hidden>
+        <div class="calib-step" id="calib-step">Step 1 / 4</div>
+        <div class="calib-instr" id="calib-instr">Lay face-down &amp; still, then lift from the TOP edge → 1</div>
+        <button id="calib-cancel" class="ghost-btn">Cancel</button>
+      </div>
 
       <div class="live-state" id="live-state">Lay the phone face-down and hold still…</div>
 
       <div class="live-box">
         <div class="live-num" id="live-num">—</div>
         <div class="live-meta">
-          <div>Lift from: <b id="live-bucket">—</b></div>
-          <div>β (top/bottom): <b id="live-beta">0</b>°</div>
-          <div>γ (left/right): <b id="live-gamma">0</b>°</div>
+          <div>Lift detected: <b id="live-bucket">—</b></div>
+          <div>tilt X: <b id="live-gx">0</b></div>
+          <div>tilt Y: <b id="live-gy">0</b></div>
         </div>
       </div>
 
-      <h3>Lift edge → Number map</h3>
-      <div class="map-grid" id="map-grid">
-        <div class="map-row" data-bucket="beta+"><span>Lift from top edge</span><select data-bucket="beta+"></select></div>
-        <div class="map-row" data-bucket="beta-"><span>Lift from bottom edge</span><select data-bucket="beta-"></select></div>
-        <div class="map-row" data-bucket="gamma+"><span>Lift from right edge</span><select data-bucket="gamma+"></select></div>
-        <div class="map-row" data-bucket="gamma-"><span>Lift from left edge</span><select data-bucket="gamma-"></select></div>
+      <h3>Target map (your spec)</h3>
+      <div class="legend">
+        <div><span>Top edge</span><b>1</b></div>
+        <div><span>Power button side (right)</span><b>2</b></div>
+        <div><span>Charging port side (bottom)</span><b>3</b></div>
+        <div><span>Volume buttons side (left)</span><b>4</b></div>
       </div>
 
-      <h3>Speed (lower = faster reveal)</h3>
+      <h3>Reveal speed (lower = faster)</h3>
       <div class="slider-row">
-        <input type="range" id="threshold" min="10" max="120" step="2" />
-        <span id="threshold-val">20</span>°
+        <input type="range" id="threshold" min="6" max="30" step="1" />
+        <span id="threshold-val">10</span>°
       </div>
 
       <div class="panel-actions">
-        <button id="reset-defaults" class="ghost-btn">Reset to defaults</button>
+        <button id="reset-defaults" class="ghost-btn">Reset</button>
       </div>
     </div>
   </section>

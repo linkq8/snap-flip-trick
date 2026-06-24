@@ -224,10 +224,16 @@ html, body {
 .live-meta { font-size: 14px; color: #cfcfd6; line-height: 1.9; }
 .live-meta b { color: #fff; }
 
-.map-grid { display: flex; flex-direction: column; gap: 8px; }
-.map-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #0e0e12; border: 1px solid #2a2a33; border-radius: 10px; padding: 10px 12px; }
-.map-row span { font-size: 14px; color: #d6d6dd; }
-.map-row select { background: #1f1f29; color: #fff; border: 1px solid #3a3a46; border-radius: 8px; padding: 6px 10px; font-size: 16px; min-width: 56px; }
+.primary-btn { width: 100%; margin-top: 14px; padding: 14px; border-radius: 12px; background: var(--snap-yellow); color: #000; border: none; font-size: 16px; font-weight: 800; cursor: pointer; }
+.calib-area { margin-top: 12px; background: #0e0e12; border: 1px solid #3a3a46; border-radius: 12px; padding: 14px; text-align: center; }
+.calib-step { font-size: 13px; font-weight: 700; color: var(--snap-yellow); letter-spacing: 0.04em; }
+.calib-instr { font-size: 16px; font-weight: 600; color: #fff; margin: 8px 0 12px; line-height: 1.5; }
+.calib-area .ghost-btn { margin-top: 0; }
+
+.legend { display: flex; flex-direction: column; gap: 6px; }
+.legend > div { display: flex; align-items: center; justify-content: space-between; background: #0e0e12; border: 1px solid #2a2a33; border-radius: 10px; padding: 9px 14px; }
+.legend span { font-size: 14px; color: #d6d6dd; }
+.legend b { font-size: 18px; color: var(--snap-yellow); }
 
 .slider-row { display: flex; align-items: center; gap: 12px; }
 .slider-row input[type=range] { flex: 1; accent-color: var(--snap-yellow); }
