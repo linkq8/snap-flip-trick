@@ -10,33 +10,37 @@ magician wrote it with the Snapchat pen.
 ---
 
 ## How the trick works (the secret) 🔑
-1. The audience says a number from **1 to 4** out loud.
-2. The magician tilts/flips the phone in the **matching direction**.
-3. The gyroscope detects the tilt direction and instantly draws the right number.
-4. The magician lifts the phone to show the screen at a readable angle.
+1. Take a "photo" (capture).
+2. Lay the phone **face-down** (screen against the table) and hold it **still for 2 seconds** —
+   detection arms silently (nothing visible, since the screen is down).
+3. The audience says a number from **1 to 4** out loud.
+4. Lift the phone up **from the matching edge** — the edge you raise turns the screen back toward you
+   and selects the number, which is already drawn by the time you see the screen.
 
-### Default map (direction → number)
-| Direction | Number |
-|-----------|--------|
-| Tilt top edge **away** from you (forward) | 1 |
-| Tilt top edge **toward** you (back) | 2 |
-| Tilt **right** | 4 |
-| Tilt **left** | 3 |
+### Default map (lift edge → number)
+| Lift the phone up from… | Number |
+|-------------------------|--------|
+| the **top** edge | 1 |
+| the **bottom** edge | 2 |
+| the **right** edge | 4 |
+| the **left** edge | 3 |
 
-> Gyroscope axes can differ slightly between devices. **Use Practice Mode** to confirm the map on
-> your phone and remap if needed.
+> Gyroscope axes can differ slightly between devices. **Use Practice Mode** to confirm which edge
+> maps to which number on your phone, and remap if needed.
 
 ---
 
 ## Practice Mode (secret) 🛠️
 - Open it with a **long press (~1s)** on the **bottom-left corner** of the screen (on the camera
   screen or after a capture).
-- Shows live: the β/γ rotation values, the detected direction, and the resulting number.
-- Try each direction, watch the number, and remap from the dropdowns.
-- Adjust **Sensitivity (threshold)**: lower = locks faster with a small tilt, higher = needs a
-  clearer flip.
-- Tip: a threshold of ~65° locks the number with a light tilt, so **you** control the final
-  presentation angle for the audience.
+- A live state line walks you through it: *Lay face-down & still → Holding… 2.0s → Armed, lift! →
+  Detected: N*. Rehearse the real motion: lay it flat, wait for "Armed", then lift from an edge.
+- Shows live: the β/γ rotation values, which edge was detected, and the resulting number.
+- Remap any edge from the dropdowns; reassign as needed for your device.
+- Adjust **Sensitivity (threshold)**: lower = locks earlier in the lift, higher = needs a more
+  decisive lift.
+- Tip: a threshold of ~60° locks the number partway through the lift, so the digit is ready before
+  the screen faces you.
 
 ---
 
@@ -78,12 +82,14 @@ Then open: `http://localhost:8000/?debug=1`
 ---
 
 ## Performance guide 🎭
-- Memorize the map and rehearse in Practice Mode until the tilt is natural and unnoticeable.
-- Take the photo, ask for the number, then tilt the phone in the matching direction with a casual
-  "let me show you" gesture.
-- Thanks to the low threshold, a small tilt is enough to lock the number — then raise the phone at
-  the angle that reads correctly for the audience.
+- Memorize the lift-edge map and rehearse in Practice Mode until it's automatic.
+- Take the photo, set the phone face-down on the table, and let it rest (~2s) while you talk to the
+  audience and they name their number.
+- Lift the phone up from the matching edge in one natural motion — the number is already written by
+  the time the screen faces you.
 - You can re-capture (✕ button) and repeat with any other number.
+- The 2-second rest also makes it look fair: the phone is clearly sitting untouched before the
+  reveal.
 
 ---
 
