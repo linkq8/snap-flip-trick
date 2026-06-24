@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>Snap Flip — دليل الاستخدام</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root {
+    --yellow: #FFFC00;
+    --ink: #15151a;
+    --muted: #6b6b76;
+    --line: #e6e6ec;
+    --soft: #faf9f0;
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic", "Tahoma", system-ui, sans-serif;
+    color: var(--ink); line-height: 1.7; font-size: 13px; background: #fff;
+  }
+  .page { padding: 0 2mm; }
+  .page-break { page-break-before: always; }
+
+  /* ===== Header ===== */
+  .hero {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--yellow); border-radius: 18px; padding: 18px 22px; margin-bottom: 18px;
+  }
+  .hero .ghost { flex: 0 0 auto; }
+  .hero h1 { margin: 0; font-size: 26px; font-weight: 800; color: #000; letter-spacing: -0.5px; }
+  .hero p { margin: 3px 0 0; font-size: 13px; color: rgba(0,0,0,0.66); font-weight: 600; }
+
+  h2 {
+    font-size: 16px; font-weight: 800; margin: 20px 0 10px; color: var(--ink);
+    display: flex; align-items: center; gap: 9px;
+  }
+  h2 .n {
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; background: var(--ink); color: var(--yellow);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;
+  }
+  p.lead { color: #3a3a44; margin: 0 0 6px; }
+
+  /* ===== Steps ===== */
+  ol.steps { list-style: none; counter-reset: s; margin: 6px 0 0; padding: 0; }
+  ol.steps li {
+    counter-increment: s; position: relative; padding: 9px 40px 9px 12px; margin-bottom: 7px;
+    background: var(--soft); border: 1px solid var(--line); border-radius: 11px;
+  }
+  ol.steps li::before {
+    content: counter(s); position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff;
+    font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps li b { color: #000; }
+
+  /* ===== Map diagram ===== */
+  .map-wrap { display: flex; gap: 18px; align-items: center; background: var(--soft); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+  .map-legend { flex: 1; }
+  .map-legend .row { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  .map-legend .row:last-child { border-bottom: 0; }
+  .badge { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 9px; background: #FF2222; color: #fff; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .map-legend .txt b { display: block; font-size: 13.5px; color: #000; }
+  .map-legend .txt span { font-size: 11.5px; color: var(--muted); }
+
+  /* ===== Callouts ===== */
+  .callout { background: #fffef0; border: 1px solid #efe9a8; border-radius: 12px; padding: 12px 14px; margin: 12px 0; font-size: 12.5px; }
+  .callout b { color: #000; }
+  .callout.warn { background: #fff5f5; border-color: #f3c9c9; }
+
+  /* ===== Add to home, two-col rows ===== */
+  .ah { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .ah:last-child { border-bottom: 0; }
+  .ah .ic { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+  .ah .ic svg { width: 22px; height: 22px; }
+  .ah .body { flex: 1; }
+  .ah .body b { color: #000; font-size: 13.5px; }
+  .ah .body p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
+  .grid2 { display: flex; gap: 12px; }
+  .grid2 > div { flex: 1; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .grid2 h3 { margin: 0 0 6px; font-size: 13px; }
+  .grid2 ul { margin: 0; padding-right: 18px; font-size: 12px; color: #3a3a44; }
+  .grid2 ul li { margin-bottom: 4px; }
+
+  .foot { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--muted); display: flex; justify-content: space-between; }
+  .tip-inline { color: #000; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 ============ -->
+<div class="page">
+  <div class="hero">
+    <span class="ghost">
+      <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+        <path d="M32 6c-7 0-12 5-12 13 0 3 0 5-1 7-2 2-5 2-6 4 0 2 3 3 5 4-1 3-4 6-9 7 0 2 4 3 8 3 1 2 1 4 3 4 2 0 4-2 5-2 2 0 4 1 5 2 2 1 4 1 6 0 1-1 3-2 5-2 1 0 3 2 5 2 2 0 2-2 3-4 4 0 8-1 8-3-5-1-8-4-9-7 2-1 5-2 5-4-1-2-4-2-6-4-1-2-1-4-1-7 0-8-5-13-12-13z" fill="#000"/>
+      </svg>
+    </span>
+    <div>
+      <h1>Snap Flip — دليل الاستخدام</h1>
+      <p>خدعة ذهنية للآيفون تكشف رقمًا اختاره الجمهور (١–٤) بخطّ اليد</p>
+    </div>
+  </div>
+
+  <h2><span class="n">؟</span> فكرة الخدعة</h2>
+  <p class="lead">
+    التطبيق يبدو كأنه كاميرا «سناب شات». تلتقط «صورة»، تضع الهاتف مقلوبًا على الطاولة لحظتين،
+    يقول الجمهور رقمًا من <b>١ إلى ٤</b>، فترفع الهاتف <b>من الحافة المطابقة للرقم</b> — فيظهر الرقم
+    مكتوبًا بخط اليد فوق الصورة قبل أن تواجه الشاشة الجمهور. <b>السر:</b> اتجاه الرفع هو ما يحدّد الرقم
+    عبر حسّاس الحركة (الجيروسكوب)، والجمهور لا يلاحظ ذلك.
+  </p>
+
+  <h2><span class="n">١</span> التحضير لأول مرة</h2>
+  <ol class="steps">
+    <li>افتح رابط التطبيق على <b>آيفون</b> من متصفّح <b>Safari</b> (يجب أن يكون رابط HTTPS).</li>
+    <li>اختر <b>موديل الآيفون</b> من الشاشة الأولى ثم اضغط «Continue».</li>
+    <li>اضغط <b>Tap to start</b> واسمح بـ <b>الكاميرا</b> و <b>الحركة (Motion &amp; Orientation)</b>.</li>
+    <li><b>عايِر جهازك مرّة واحدة:</b> اضغط مطوّلًا (~ثانية) على <b>الزاوية السفلية اليسرى</b> لفتح
+        لوحة «Practice &amp; Setup»، ثم «Calibrate to my phone» ونفّذ الرفعات الأربع الموجّهة.</li>
+  </ol>
+  <div class="callout">
+    💡 <b>المعايرة ضرورية:</b> إشارة الجاذبية تختلف بين الأجهزة، والمعايرة تربط كل حافة بالرقم الصحيح
+    لهاتفك أنت. تُحفظ تلقائيًا — تفعلها مرّة وتعمل الخدعة بثبات.
+  </div>
+
+  <h2><span class="n">٢</span> خريطة الحواف ← الأرقام</h2>
+  <div class="map-wrap">
+    <!-- Phone diagram -->
+    <svg width="150" height="220" viewBox="0 0 150 220" aria-hidden="true">
+      <!-- phone body -->
+      <rect x="40" y="30" width="70" height="160" rx="14" fill="#fff" stroke="#15151a" stroke-width="2.5"/>
+      <rect x="46" y="36" width="58" height="148" rx="9" fill="#f1f1f4"/>
+      <!-- camera bump -->
+      <circle cx="58" cy="50" r="5" fill="#cfcfd6"/>
+      <!-- side buttons -->
+      <rect x="36.5" y="70" width="3.5" height="14" rx="1.5" fill="#15151a"/>
+      <rect x="36.5" y="90" width="3.5" height="20" rx="1.5" fill="#15151a"/>
+      <rect x="110" y="80" width="3.5" height="26" rx="1.5" fill="#15151a"/>
+      <!-- number badges -->
+      <g font-family="system-ui, sans-serif" font-weight="800" font-size="17" text-anchor="middle">
+        <circle cx="75" cy="14" r="13" fill="#FF2222"/><text x="75" y="20" fill="#fff">1</text>
+        <circle cx="132" cy="93" r="13" fill="#FF2222"/><text x="132" y="99" fill="#fff">2</text>
+        <circle cx="75" cy="206" r="13" fill="#FF2222"/><text x="75" y="212" fill="#fff">3</text>
+        <circle cx="18" cy="93" r="13" fill="#FF2222"/><text x="18" y="99" fill="#fff">4</text>
+      </g>
+      <!-- arrows -->
+      <g stroke="#15151a" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M75 30 L75 24"/><path d="M110 93 L120 93"/><path d="M75 190 L75 196"/><path d="M40 93 L30 93"/>
+      </g>
+    </svg>
+    <div class="map-legend">
+      <div class="row"><span class="badge">1</span><span class="txt"><b>الحافة العلوية</b><span>أعلى الهاتف</span></span></div>
+      <div class="row"><span class="badge">2</span><span class="txt"><b>الجهة اليمنى</b><span>جهة زر التشغيل</span></span></div>
+      <div class="row"><span class="badge">3</span><span class="txt"><b>الحافة السفلية</b><span>جهة منفذ الشحن</span></span></div>
+      <div class="row"><span class="badge">4</span><span class="txt"><b>الجهة اليسرى</b><span>جهة أزرار الصوت</span></span></div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:8px;font-size:12px;color:var(--muted)">
+    احفظ هذه الخريطة جيّدًا — هي قلب الأداء. (يمكن تغيير الترتيب لجهازك عبر المعايرة.)
+  </p>
+
+  <h2><span class="n">٣</span> كيف تؤدّي الخدعة — خطوة بخطوة</h2>
+  <ol class="steps">
+    <li><b>التقط الصورة</b> بالضغط على زر الالتقاط الأبيض.</li>
+    <li><b>ضع الهاتف مقلوبًا</b> (الشاشة للأسفل) على الطاولة، واتركه ثابتًا <b>ثانيتين</b> — يتسلّح الكاشف بصمت.</li>
+    <li>اطلب من الجمهور أن <b>ينطق رقمًا من ١ إلى ٤</b> بصوت مسموع.</li>
+    <li><b>ارفع الهاتف من الحافة المطابقة</b> للرقم بحركة طبيعية واحدة.</li>
+    <li>الرقم يكون <b>مرسومًا بالفعل</b> فوق الصورة قبل أن تدير الشاشة نحو الجمهور.</li>
+  </ol>
+  <div class="callout warn">
+    ⚠️ <b>قاعدة مهمة:</b> الرفعة الصغيرة (٤°) تكفي لإطلاق الكشف. ضع الهاتف على سطح <b>مستوٍ</b>،
+    وارفع من الحافة الصحيحة بثقة. للتمرّن دون جمهور استخدم «Practice Mode» من نفس اللوحة السرية.
+  </div>
+
+  <div class="foot">
+    <span>Snap Flip · دليل الساحر</span><span>صفحة ١ من ٢</span>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 ============ -->
+<div class="page page-break">
+  <h2><span class="n">★</span> إضافته للشاشة الرئيسية (ملء الشاشة)</h2>
+  <p class="lead">
+    لتشغيله كتطبيق حقيقي <b>بكامل الشاشة وبدون شريط المتصفح</b> (وهذا يخفي أنه صفحة ويب) — أضِفه إلى الشاشة
+    الرئيسية من <b>Safari على الآيفون</b>:
+  </p>
+
+  <div class="ah">
+    <span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FFFC00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M6 11v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7"/>
+      </svg>
+    </span>
+    <div class="body"><b>١) افتح الرابط في Safari</b><p>تأكّد أنك في متصفّح Safari وليس داخل تطبيق آخر، ثم اضغط زرّ <b>المشاركة</b> (المربّع مع السهم المتّجه للأعلى) في الأسفل.</p></div>
+  </div>
+  <div class="ah">
+    <span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FFFC00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8"/><path d="M8 12h8"/>
+      </svg>
+    </span>
+    <div class="body"><b>٢) اختر «Add to Home Screen»</b><p>مرّر في قائمة المشاركة للأسفل واختر «إضافة إلى الشاشة الرئيسية / Add to Home Screen». يمكنك تغيير الاسم (مثلًا: Snapchat) قبل الضغط على «Add».</p></div>
+  </div>
+  <div class="ah">
+    <span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FFFC00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+    </span>
+    <div class="body"><b>٣) افتحه من الأيقونة</b><p>أغلِق Safari وافتح التطبيق من أيقونته الجديدة على الشاشة الرئيسية — سيعمل <b>بكامل الشاشة</b> بلا شريط عنوان أو أزرار متصفح.</p></div>
+  </div>
+  <div class="callout">
+    💡 عند أوّل فتح من الأيقونة سيطلب <b>إذن الكاميرا</b> و <b>إذن الحركة</b> — اسمح بهما. لو رُفض إذن الحركة
+    لن تعمل الخدعة، وسيظهر لك التطبيق رسالة تشرح كيف تُعيد تفعيله من الإعدادات.
+  </div>
+
+  <h2><span class="n">⚙</span> الأذونات المطلوبة</h2>
+  <div class="grid2">
+    <div>
+      <h3>📷 الكاميرا</h3>
+      <ul>
+        <li>تظهر عند أول تشغيل — اضغط «Allow».</li>
+        <li>لو رفضتها: الإعدادات ← Safari ← الكاميرا ← اسمح.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>📐 الحركة (Motion)</h3>
+      <ul>
+        <li>«Motion &amp; Orientation Access» — اضغط «Allow».</li>
+        <li>إعادة تفعيلها: الإعدادات ← Apps ← Safari ← Advanced.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">🎩</span> نصائح الأداء</h2>
+  <div class="grid2">
+    <div>
+      <h3>قبل العرض</h3>
+      <ul>
+        <li>تمرّن في «Practice Mode» حتى تصبح الخريطة تلقائية.</li>
+        <li>تأكّد أن المعايرة محفوظة على هذا الهاتف.</li>
+        <li>اضبط سرعة الكشف (افتراضي ٤°) حسب راحتك.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>أثناء العرض</h3>
+      <ul>
+        <li>ضع الهاتف على سطح مستوٍ وفاتح اللون لتُرى الحافة.</li>
+        <li>املأ ثانيتي الانتظار بالكلام مع الجمهور.</li>
+        <li>ارفع من الحافة بحركة واحدة واثقة وطبيعية.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    🔁 <b>للتكرار:</b> اضغط زر ✕ للعودة للكاميرا والتقط صورة جديدة، ثم كرّر مع أي رقم آخر. وضع الهاتف
+    لحظتين دون لمس يجعل الخدعة تبدو نزيهة تمامًا.
+  </div>
+
+  <div class="foot">
+    <span>Snap Flip · ليست تابعة لشركة Snap Inc. · لأغراض الترفيه</span><span>صفحة ٢ من ٢</span>
+  </div>
+</div>
+
+</body>
+</html>
