@@ -20,25 +20,41 @@
   const debugBox = $("debug");
 
   // ===== Settings (persisted) =====
-  const STORE_KEY = "snapflip.config.v4";
+  // Tuning (speed) and the calibration mapping are stored under SEPARATE keys, so changing
+  // a tuning default never wipes the user's device calibration.
+  const TUNE_KEY = "snapflip.tune.v5";
+  const MAP_KEY = "snapflip.mapping";
+  const LEGACY_KEYS = ["snapflip.config.v4"]; // migrate calibration from older versions
   const DEFAULTS = {
-    tiltDeg: 10, // lift tilt (degrees) that triggers the reveal — low = very fast
+    tiltDeg: 4, // lift tilt (degrees) that triggers the reveal — low = very fast/sensitive
     // best-guess default; the Calibrate flow overwrites these with correct values for the device
     mapping: { "ay-": 1, "ax+": 2, "ay+": 3, "ax-": 4 },
   };
   let config = loadConfig();
 
   function loadConfig() {
+    let tiltDeg = DEFAULTS.tiltDeg;
+    let mapping = JSON.parse(JSON.stringify(DEFAULTS.mapping));
     try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        const c = JSON.parse(raw);
-        return { tiltDeg: c.tiltDeg || DEFAULTS.tiltDeg, mapping: Object.assign({}, DEFAULTS.mapping, c.mapping || {}) };
+      const t = JSON.parse(localStorage.getItem(TUNE_KEY) || "null");
+      if (t && typeof t.tiltDeg === "number") tiltDeg = t.tiltDeg;
+      let m = JSON.parse(localStorage.getItem(MAP_KEY) || "null");
+      if (!m) {
+        for (const k of LEGACY_KEYS) { // one-time migration of an existing calibration
+          const old = JSON.parse(localStorage.getItem(k) || "null");
+          if (old && old.mapping) {
+            m = old.mapping;
+            try { localStorage.setItem(MAP_KEY, JSON.stringify(m)); } catch (e) {} // persist it
+            break;
+          }
+        }
       }
+      if (m) mapping = Object.assign({}, DEFAULTS.mapping, m);
     } catch (e) {}
-    return JSON.parse(JSON.stringify(DEFAULTS));
+    return { tiltDeg, mapping };
   }
-  function saveConfig() { try { localStorage.setItem(STORE_KEY, JSON.stringify(config)); } catch (e) {} }
+  function saveTune() { try { localStorage.setItem(TUNE_KEY, JSON.stringify({ tiltDeg: config.tiltDeg })); } catch (e) {} }
+  function saveMapping() { try { localStorage.setItem(MAP_KEY, JSON.stringify(config.mapping)); } catch (e) {} }
 
   // ===== Detector tuning =====
   const SETTLE_MS = 2000;   // face-down + still time to arm (real performance)
@@ -59,7 +75,9 @@
   let stillSince = null, lastNow = null, lastBucket = "—";
   let gxf = 0, gyf = 0, gzf = 0, gravInit = false; // smoothed gravity
   let gxBase = 0, gyBase = 0;                       // gravity baseline at arm time
+  let pendingBucket = null, confirmCount = 0;       // require 2 consecutive samples (anti-noise at low angles)
   let wakeLock = null;
+  const CONFIRM_SAMPLES = 2;
 
   // Calibration
   const CALIB_STEPS = [
@@ -143,6 +161,7 @@
   // ===== Detection (gravity tilt) =====
   function beginWaiting(practice) {
     detectMode = "waiting"; isPractice = practice; locked = false; stillSince = null;
+    pendingBucket = null; confirmCount = 0;
     if (practiceOpen) setStateText("place");
   }
 
@@ -183,14 +202,16 @@
       return;
     }
 
-    // Phase 2: armed — the first decisive tilt direction picks the edge
+    // Phase 2: armed — the first decisive tilt direction picks the edge.
+    // Require the same bucket on CONFIRM_SAMPLES consecutive samples so a single
+    // noisy reading can't fire at the very sensitive low trigger angle.
     if (detectMode !== "armed" || locked) return;
     const dx = gxf - gxBase, dy = gyf - gyBase;
     if (Math.hypot(dx, dy) >= tiltTrig()) {
       const bucket = Math.abs(dx) >= Math.abs(dy) ? ("ax" + (dx > 0 ? "+" : "-")) : ("ay" + (dy > 0 ? "+" : "-"));
-      lastBucket = bucket;
-      fire(bucket);
-    }
+      if (bucket === pendingBucket) confirmCount++; else { pendingBucket = bucket; confirmCount = 1; }
+      if (confirmCount >= CONFIRM_SAMPLES) { lastBucket = bucket; fire(bucket); }
+    } else { pendingBucket = null; confirmCount = 0; }
   }
 
   function fire(bucket) {
@@ -234,7 +255,7 @@
     calibStep++;
     if (calibStep >= CALIB_STEPS.length) {
       config.mapping = Object.assign({}, DEFAULTS.mapping, calibMap);
-      saveConfig();
+      saveMapping();
       calibrating = false;
       $("calib-step").textContent = "Done ✓";
       $("calib-instr").textContent = "Calibrated! All four edges are set for your phone.";
@@ -349,10 +370,11 @@
     $("threshold").addEventListener("input", () => {
       config.tiltDeg = parseInt($("threshold").value, 10);
       $("threshold-val").textContent = config.tiltDeg;
-      saveConfig();
+      saveTune();
     });
     $("reset-defaults").addEventListener("click", () => {
-      config = JSON.parse(JSON.stringify(DEFAULTS)); saveConfig(); syncPracticeUI();
+      // reset speed only — keep the device calibration the user worked for
+      config.tiltDeg = DEFAULTS.tiltDeg; saveTune(); syncPracticeUI();
     });
 
     if (DEBUG) {
