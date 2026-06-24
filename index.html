@@ -72,7 +72,14 @@
 
     <!-- handwriting reveal layer -->
     <svg id="reveal" viewBox="0 0 300 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <g id="reveal-g">
+      <defs>
+        <!-- hand-drawn tremor: turbulence displaces the otherwise-clean stroke -->
+        <filter id="rough" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence id="rough-noise" type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="7" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
+      <g id="reveal-g" filter="url(#rough)">
         <path id="reveal-path" fill="none" stroke="#FFFC00" stroke-width="13"
               stroke-linecap="round" stroke-linejoin="round" />
         <circle id="pen-tip" r="7.5" fill="#FFFC00" opacity="0" />
@@ -108,23 +115,25 @@
         <button id="practice-close" class="panel-x" aria-label="close">✕</button>
       </div>
 
-      <p class="panel-note">Move the phone to see the detected direction and number live. This screen is secret — never show it to the audience.</p>
+      <p class="panel-note">Lay the phone face-down and hold still for 2s to arm, then lift it up from one edge — the edge you lift from picks the number. This screen is secret — never show it to the audience.</p>
+
+      <div class="live-state" id="live-state">Lay the phone face-down and hold still…</div>
 
       <div class="live-box">
         <div class="live-num" id="live-num">—</div>
         <div class="live-meta">
-          <div>Direction: <b id="live-bucket">—</b></div>
-          <div>β (fwd/back): <b id="live-beta">0</b>°</div>
+          <div>Lift from: <b id="live-bucket">—</b></div>
+          <div>β (top/bottom): <b id="live-beta">0</b>°</div>
           <div>γ (left/right): <b id="live-gamma">0</b>°</div>
         </div>
       </div>
 
-      <h3>Direction → Number map</h3>
+      <h3>Lift edge → Number map</h3>
       <div class="map-grid" id="map-grid">
-        <div class="map-row" data-bucket="beta+"><span>Tilt top edge away (forward)</span><select data-bucket="beta+"></select></div>
-        <div class="map-row" data-bucket="beta-"><span>Tilt top edge toward you (back)</span><select data-bucket="beta-"></select></div>
-        <div class="map-row" data-bucket="gamma+"><span>Tilt right</span><select data-bucket="gamma+"></select></div>
-        <div class="map-row" data-bucket="gamma-"><span>Tilt left</span><select data-bucket="gamma-"></select></div>
+        <div class="map-row" data-bucket="beta+"><span>Lift from top edge</span><select data-bucket="beta+"></select></div>
+        <div class="map-row" data-bucket="beta-"><span>Lift from bottom edge</span><select data-bucket="beta-"></select></div>
+        <div class="map-row" data-bucket="gamma+"><span>Lift from right edge</span><select data-bucket="gamma+"></select></div>
+        <div class="map-row" data-bucket="gamma-"><span>Lift from left edge</span><select data-bucket="gamma-"></select></div>
       </div>
 
       <h3>Sensitivity (threshold)</h3>

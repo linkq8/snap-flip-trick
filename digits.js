@@ -24,19 +24,22 @@ function setDigit(pathEl, groupEl, digit) {
   if (!d) return;
   pathEl.setAttribute("d", d);
 
-  // The reveal layer viewBox is 300x460. Place the digit near center, large, with a small random tilt.
-  const scale = 2.0;
-  const w = 100 * scale, h = 160 * scale;
-  // Gentle random offset around the middle
-  const jitterX = (rand() - 0.5) * 40;
-  const jitterY = (rand() - 0.5) * 40;
-  const x = (300 - w) / 2 + jitterX;
-  const y = (460 - h) / 2 + jitterY;
-  const rot = (rand() - 0.5) * 16; // tilt ±8 degrees
+  // The reveal layer viewBox is 300x460; digit local box is 100x160 (center 50,80).
+  const scale = 2.1;
+  // Place near center with a gentle random offset
+  const centerX = 150 + (rand() - 0.5) * 38;
+  const centerY = 230 + (rand() - 0.5) * 38;
+  const rot = (rand() - 0.5) * 10;          // baseline tilt ±5°
+  const slant = -(6 + rand() * 7);          // forward (italic-like) lean, ~ -6..-13°
+  // Build around the digit's own center so rotation/skew look natural
   groupEl.setAttribute(
     "transform",
-    `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)} ${(w/2).toFixed(1)} ${(h/2).toFixed(1)}) scale(${scale})`
+    `translate(${centerX.toFixed(1)} ${centerY.toFixed(1)}) rotate(${rot.toFixed(1)}) skewX(${slant.toFixed(1)}) scale(${scale}) translate(-50 -80)`
   );
+
+  // Re-seed the hand-tremor filter so each reveal looks freshly written
+  const noise = document.getElementById("rough-noise");
+  if (noise) noise.setAttribute("seed", String(Math.floor(rand() * 1000)));
 }
 
 // Simple randomness (avoid relying on anything unavailable)

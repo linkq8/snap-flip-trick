@@ -190,6 +190,13 @@ html, body {
 .panel-note { color: #9a9aa5; font-size: 13px; line-height: 1.6; }
 .panel-card h3 { font-size: 14px; color: #c9c9d2; margin: 20px 0 8px; }
 
+.live-state {
+  margin-top: 12px; padding: 11px 12px; text-align: center;
+  background: #0e0e12; border: 1px solid #2a2a33; border-radius: 10px;
+  font-size: 14px; font-weight: 600; color: #ffeebb;
+}
+.live-state.ready { background: var(--snap-yellow); color: #000; border-color: var(--snap-yellow); }
+
 .live-box {
   display: flex; align-items: center; gap: 16px;
   background: #0e0e12; border: 1px solid #2a2a33; border-radius: 14px;

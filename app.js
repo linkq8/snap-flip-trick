@@ -1,7 +1,7 @@
 /*
  * app.js — the trick's logic
- * 1) Camera & motion permissions   2) live camera   3) capture
- * 4) detect flip direction via gyroscope   5) draw the number   6) practice mode   7) debug mode
+ * Flow: capture a "photo" → lay the phone face-down & still for 2s (arms silently)
+ *       → lift it up from one edge → the lift edge picks a number 1–4, drawn by hand.
  */
 (function () {
   "use strict";
@@ -15,16 +15,15 @@
   };
   const video = $("video");
   const photo = $("photo");
-  const revealSvg = $("reveal");
   const revealPath = $("reveal-path");
   const revealG = $("reveal-g");
   const penTip = $("pen-tip");
   const debugBox = $("debug");
 
   // ===== Settings (persisted locally) =====
-  const STORE_KEY = "snapflip.config.v1";
+  const STORE_KEY = "snapflip.config.v2";
   const DEFAULTS = {
-    threshold: 65, // integrated rotation (degrees) needed to lock the decision
+    threshold: 60, // integrated lift rotation (degrees) needed to lock the number
     mapping: { "beta+": 1, "beta-": 2, "gamma+": 4, "gamma-": 3 },
   };
   let config = loadConfig();
@@ -46,13 +45,20 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(config)); } catch (e) {}
   }
 
+  // ===== Tuning constants for the "settle then lift" detector =====
+  const SETTLE_MS = 2000;   // must stay face-down & still this long to arm
+  const STILL_RATE = 12;    // deg/s — below this counts as "still"
+  const FLAT_GZ = 8.5;      // m/s² — z-gravity magnitude that means "lying flat"
+  const FLAT_XY = 3.6;      // m/s² — max horizontal gravity that still counts as flat
+
   // ===== State =====
   let stream = null;
   let currentFacing = "environment";
-  let armed = false;        // armed for detection after a capture (the real trick)
-  let practiceLive = false; // live detection in practice mode
+  let detectMode = "idle";  // 'idle' | 'waiting' (settling) | 'armed' (integrating lift)
+  let isPractice = false;   // detection is for the practice display, not a real reveal
   let practiceOpen = false;
   let locked = false;       // locked — don't reveal twice
+  let stillSince = null;    // timestamp when the face-down stillness began
   let accB = 0, accG = 0;   // integrated rotation around x (beta) and y (gamma)
   let lastNow = null;
   let lastBucket = "—";
@@ -106,7 +112,6 @@
 
   function attachMotionListeners() {
     window.addEventListener("devicemotion", onMotion, true);
-    window.addEventListener("deviceorientation", onOrient, true);
   }
 
   // ===== Camera =====
@@ -118,8 +123,7 @@
     });
     video.srcObject = stream;
     currentFacing = facing;
-    // Mirror the front camera (like Snapchat)
-    video.style.transform = facing === "user" ? "scaleX(-1)" : "none";
+    video.style.transform = facing === "user" ? "scaleX(-1)" : "none"; // mirror front cam
     await video.play().catch(() => {});
   }
 
@@ -139,23 +143,31 @@
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.restore();
 
-    // Prepare for detection
+    // Begin the "settle face-down, then lift" detection cycle
     clearDraw(revealPath, penTip);
-    resetAccum();
-    locked = false;
-    armed = true;
+    beginWaiting(false);
     show("capture");
   }
 
   function closeCapture() {
-    armed = false;
+    detectMode = "idle";
     locked = false;
+    isPractice = false;
     clearDraw(revealPath, penTip);
     show("camera");
   }
 
-  // ===== Flip-direction detection =====
+  // ===== Detection: settle (face-down + still 2s) → lift edge =====
   function resetAccum() { accB = 0; accG = 0; lastNow = null; }
+
+  function beginWaiting(practice) {
+    detectMode = "waiting";
+    isPractice = practice;
+    locked = false;
+    stillSince = null;
+    resetAccum();
+    if (practiceOpen) setStateText("place");
+  }
 
   function onMotion(e) {
     const now = performance.now();
@@ -164,77 +176,89 @@
     if (dt <= 0 || dt > 0.5) dt = (e.interval && e.interval > 0) ? e.interval : 0.016;
 
     const rr = e.rotationRate || {};
-    const rb = rr.beta || 0;   // rotation around x (tilt fwd/back)
-    const rg = rr.gamma || 0;  // rotation around y (tilt left/right)
+    const rb = rr.beta || 0;   // rotation around x (lift from top/bottom edge)
+    const rg = rr.gamma || 0;  // rotation around y (lift from left/right edge)
     const ra = rr.alpha || 0;  // rotation around z
 
+    const ag = e.accelerationIncludingGravity || {};
+    const gx = ag.x || 0, gy = ag.y || 0, gz = ag.z || 0;
+
+    const angSpeed = Math.max(Math.abs(rb), Math.abs(rg), Math.abs(ra));
+    const isStill = angSpeed < STILL_RATE;
+    let isFlat = Math.abs(gz) >= FLAT_GZ && Math.hypot(gx, gy) <= FLAT_XY;
+    if (gx === 0 && gy === 0 && gz === 0) isFlat = true; // gravity unavailable → degrade to stillness only
+
+    // Integrate rotation (used to detect the lift); decay while still to avoid drift
     accB += rb * dt;
     accG += rg * dt;
-
-    // Decay while still, to prevent drift
-    if (Math.max(Math.abs(rb), Math.abs(rg), Math.abs(ra)) < 6) {
-      accB *= 0.85;
-      accG *= 0.85;
-    }
+    if (angSpeed < 6) { accB *= 0.85; accG *= 0.85; }
 
     if (practiceOpen) updateLive();
     if (DEBUG) updateDebug();
 
-    if (locked) return;
-    if (!(armed || practiceLive)) return;
-
-    const aB = Math.abs(accB), aG = Math.abs(accG);
-    const peak = Math.max(aB, aG);
-    if (peak >= config.threshold) {
-      const bucket = aB >= aG
-        ? ("beta" + (accB > 0 ? "+" : "-"))
-        : ("gamma" + (accG > 0 ? "+" : "-"));
-      lastBucket = bucket;
-      const number = config.mapping[bucket];
-      fire(bucket, number);
+    // Phase 1: wait for the phone to lie face-down and still for SETTLE_MS, then arm
+    if (detectMode === "waiting") {
+      if (isFlat && isStill) {
+        if (stillSince == null) stillSince = now;
+        const held = now - stillSince;
+        if (practiceOpen) setStateText("hold", held);
+        if (held >= SETTLE_MS) {
+          detectMode = "armed";
+          resetAccum();           // start integrating the lift from zero
+          stillSince = null;
+          if (practiceOpen) setStateText("ready");
+        }
+      } else {
+        stillSince = null;
+        if (practiceOpen) setStateText("place");
+      }
+      return;
     }
-  }
 
-  // Live orientation values (for the practice display) — a helpful reference
-  let liveBeta = 0, liveGamma = 0;
-  function onOrient(e) {
-    if (e.beta != null) liveBeta = e.beta;
-    if (e.gamma != null) liveGamma = e.gamma;
+    // Phase 2: armed — the first decisive lift direction picks the number
+    if (detectMode !== "armed" || locked) return;
+    const aB = Math.abs(accB), aG = Math.abs(accG);
+    if (Math.max(aB, aG) >= config.threshold) {
+      const bucket = aB >= aG ? ("beta" + (accB > 0 ? "+" : "-"))
+                              : ("gamma" + (accG > 0 ? "+" : "-"));
+      lastBucket = bucket;
+      fire(bucket, config.mapping[bucket]);
+    }
   }
 
   function fire(bucket, number) {
     locked = true;
-    if (armed) {
-      armed = false;
-      reveal(number);
-    } else if (practiceLive) {
+    if (isPractice) {
       showPracticeResult(bucket, number);
-      setTimeout(() => { locked = false; resetAccum(); }, 800);
+      setStateText("detected", number);
+      // reset for another rehearsal rep
+      setTimeout(() => { if (practiceOpen) beginWaiting(true); }, 1300);
+    } else {
+      reveal(number);
+      detectMode = "idle";
     }
   }
 
   // ===== Reveal (draw) =====
   function reveal(number) {
     setDigit(revealPath, revealG, number);
-    animateDraw(revealPath, penTip, 680);
+    animateDraw(revealPath, penTip, 760);
   }
 
   // ===== Practice mode =====
   function openPractice() {
     practiceOpen = true;
-    practiceLive = true;
-    locked = false;
-    resetAccum();
     syncPracticeUI();
+    beginWaiting(true);
     $("practice-panel").classList.add("active");
   }
   function closePractice() {
     practiceOpen = false;
-    practiceLive = false;
+    isPractice = false;
+    detectMode = "idle";
     $("practice-panel").classList.remove("active");
   }
   function syncPracticeUI() {
-    // Map dropdowns
     document.querySelectorAll("#map-grid select").forEach((sel) => {
       const bucket = sel.getAttribute("data-bucket");
       sel.innerHTML = "";
@@ -264,6 +288,21 @@
     $("live-num").textContent = number;
     $("live-bucket").textContent = bucket;
   }
+  function setStateText(kind, val) {
+    const el = $("live-state");
+    if (!el) return;
+    el.classList.remove("ready");
+    if (kind === "place") {
+      el.textContent = "Lay the phone face-down and hold still…";
+    } else if (kind === "hold") {
+      el.textContent = "Holding still… " + (val / 1000).toFixed(1) + "s / 2.0s";
+    } else if (kind === "ready") {
+      el.textContent = "Armed — lift from one edge!";
+      el.classList.add("ready");
+    } else if (kind === "detected") {
+      el.textContent = "Detected: " + val + "  (resetting…)";
+    }
+  }
 
   // ===== Debug mode (desktop) =====
   function updateDebug() {
@@ -271,25 +310,35 @@
     debugBox.hidden = false;
     debugBox.textContent =
       "accβ=" + accB.toFixed(0) + "  accγ=" + accG.toFixed(0) +
-      "\nthreshold=" + config.threshold +
-      "  armed=" + armed + "  locked=" + locked +
-      "\nlastBucket=" + lastBucket +
+      "\nmode=" + detectMode + "  practice=" + isPractice + "  locked=" + locked +
+      "\nthreshold=" + config.threshold + "  lastBucket=" + lastBucket +
       "\nmap " + JSON.stringify(config.mapping);
   }
+  function debugFakeCapture() {
+    photo.width = 375; photo.height = 812;
+    const ctx = photo.getContext("2d");
+    const g = ctx.createLinearGradient(0, 0, 0, 812);
+    g.addColorStop(0, "#3a7bd5"); g.addColorStop(1, "#3a6073");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 375, 812);
+    clearDraw(revealPath, penTip);
+    beginWaiting(false);
+    show("capture");
+  }
   function simulateBucket(bucket) {
-    // Simulate a flip from the keyboard for desktop testing
     lastBucket = bucket;
     const number = config.mapping[bucket];
-    if (armed || practiceLive) fire(bucket, number);
+    if (detectMode === "waiting" || detectMode === "armed" || isPractice) {
+      detectMode = "armed"; // pretend the settle completed
+      locked = false;
+      fire(bucket, number);
+    }
     if (DEBUG) updateDebug();
   }
 
   // ===== Wake Lock =====
   async function requestWakeLock() {
     try {
-      if ("wakeLock" in navigator) {
-        wakeLock = await navigator.wakeLock.request("screen");
-      }
+      if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
     } catch (e) {}
   }
   document.addEventListener("visibilitychange", () => {
@@ -302,9 +351,7 @@
   function bindSecret(el) {
     if (!el) return;
     let timer = null;
-    const startPress = (ev) => {
-      timer = setTimeout(() => { openPractice(); }, 700);
-    };
+    const startPress = () => { timer = setTimeout(() => { openPractice(); }, 700); };
     const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
     el.addEventListener("pointerdown", startPress);
     el.addEventListener("pointerup", cancel);
@@ -316,7 +363,7 @@
   function bindEvents() {
     $("start-btn").addEventListener("click", startApp);
     screens.start.addEventListener("click", (e) => {
-      if (e.target.id === "start-btn") return; // avoid double-trigger
+      if (e.target.id === "start-btn") return;
       startApp();
     });
 
@@ -327,12 +374,10 @@
     bindSecret($("secret-hotspot"));
     bindSecret($("secret-hotspot-2"));
 
-    // Practice panel
     $("practice-close").addEventListener("click", closePractice);
     document.querySelectorAll("#map-grid select").forEach((sel) => {
       sel.addEventListener("change", () => {
-        const bucket = sel.getAttribute("data-bucket");
-        config.mapping[bucket] = parseInt(sel.value, 10);
+        config.mapping[sel.getAttribute("data-bucket")] = parseInt(sel.value, 10);
         saveConfig();
       });
     });
@@ -347,7 +392,6 @@
       syncPracticeUI();
     });
 
-    // Debug mode on desktop
     if (DEBUG) {
       window.addEventListener("keydown", (e) => {
         const k = e.key;
@@ -355,11 +399,12 @@
         else if (k === "ArrowDown") simulateBucket("beta-");
         else if (k === "ArrowRight") simulateBucket("gamma+");
         else if (k === "ArrowLeft") simulateBucket("gamma-");
-        else if (k >= "1" && k <= "4") { if (armed) { locked = true; armed = false; reveal(parseInt(k, 10)); } }
-        else if (k === "c" || k === "C") capturePhoto();
+        else if (k >= "1" && k <= "4") { detectMode = "idle"; locked = true; reveal(parseInt(k, 10)); }
+        else if (k === "c" || k === "C") { video.videoWidth ? capturePhoto() : debugFakeCapture(); }
         else if (k === "x" || k === "X") closeCapture();
         else if (k === "p" || k === "P") { practiceOpen ? closePractice() : openPractice(); }
       });
+      attachMotionListeners(); // allow synthetic devicemotion events during desktop testing
       updateDebug();
     }
   }
