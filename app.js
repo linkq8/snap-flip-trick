@@ -13,6 +13,37 @@
   const $ = (id) => document.getElementById(id);
   const screens = { phone: $("phone-screen"), start: $("start-screen"), camera: $("camera-screen"), capture: $("capture-screen") };
   const PHONE_KEY = "snapflip.phone";
+
+  // ===== Per-model device layout =====
+  // Every iPhone 15–18 ships a Dynamic Island; in portrait their safe-area insets are effectively
+  // identical (~59px top / 34px bottom). The table is per-model so screen-size tweaks are easy later,
+  // but its real job is twofold: (1) draw the Dynamic Island for authenticity, and (2) force correct
+  // iPhone insets even in Safari-browser mode, where env(safe-area-inset-*) returns 0.
+  const PHONE_SPECS = {
+    _default: { safeTop: 59, safeBottom: 34, island: true, islandW: 126, islandH: 37, islandTop: 11 },
+    // Larger bodies (Plus / Pro Max) — same insets, marginally wider Island pill.
+    "iPhone 15 Plus":    { safeTop: 59, safeBottom: 34, island: true, islandW: 128, islandH: 37, islandTop: 11 },
+    "iPhone 15 Pro Max": { safeTop: 59, safeBottom: 34, island: true, islandW: 128, islandH: 37, islandTop: 11 },
+    "iPhone 16 Plus":    { safeTop: 59, safeBottom: 34, island: true, islandW: 128, islandH: 37, islandTop: 11 },
+    "iPhone 16 Pro Max": { safeTop: 62, safeBottom: 34, island: true, islandW: 128, islandH: 38, islandTop: 12 },
+    "iPhone 17 Pro Max": { safeTop: 62, safeBottom: 34, island: true, islandW: 128, islandH: 38, islandTop: 12 },
+    "iPhone 18 Pro Max": { safeTop: 62, safeBottom: 34, island: true, islandW: 128, islandH: 38, islandTop: 12 },
+  };
+  function specFor(model) { return PHONE_SPECS[model] || PHONE_SPECS._default; }
+  function applyPhoneModel(model) {
+    if (!model) return;
+    const s = specFor(model);
+    const root = document.documentElement.style;
+    // Use the larger of the OS-reported inset (installed PWA) and the model's known inset (browser).
+    root.setProperty("--safe-top", "max(env(safe-area-inset-top, 0px), " + s.safeTop + "px)");
+    root.setProperty("--safe-bottom", "max(env(safe-area-inset-bottom, 0px), " + s.safeBottom + "px)");
+    document.body.classList.toggle("has-island", !!s.island);
+    if (s.island) {
+      root.setProperty("--island-w", s.islandW + "px");
+      root.setProperty("--island-h", s.islandH + "px");
+      root.setProperty("--island-top", s.islandTop + "px");
+    }
+  }
   const video = $("video");
   const photo = $("photo");
   const revealPath = $("reveal-path");
@@ -76,7 +107,9 @@
   let stillSince = null, lastNow = null, lastBucket = "—";
   let gxf = 0, gyf = 0, gzf = 0, gravInit = false; // smoothed gravity
   let gxBase = 0, gyBase = 0;                       // gravity baseline at arm time
+  let armTime = 0;                                  // when we armed — used by the stuck-armed watchdog
   let pendingBucket = null, confirmCount = 0;       // require 2 consecutive samples (anti-noise at low angles)
+  const ARMED_TIMEOUT_MS = 15000;                   // auto-disarm if no clean lift within this window
   let wakeLock = null;
   const CONFIRM_SAMPLES = 2;
 
@@ -99,7 +132,15 @@
   // ===== Start + permissions =====
   async function startApp() {
     $("start-error").hidden = true;
-    await requestMotionPermission();
+    // iOS: if Motion access is denied, devicemotion never fires and the trick would die
+    // silently on stage. Stop here with a clear message instead of proceeding blind.
+    const motionOk = await requestMotionPermission();
+    if (!motionOk) {
+      const err = $("start-error");
+      err.hidden = false;
+      err.textContent = "Motion access is off — the trick needs it. On iPhone enable Motion & Orientation for this site (Settings ▸ Apps ▸ Safari ▸ Advanced, or the “aA” menu ▸ site settings), then reload.";
+      return;
+    }
     attachMotionListeners();
     try { await startCamera(currentFacing); }
     catch (e) {
@@ -196,7 +237,7 @@
         const held = now - stillSince;
         if (practiceOpen) setStateText("hold", held, settleNeeded);
         if (held >= settleNeeded) {
-          detectMode = "armed"; gxBase = gxf; gyBase = gyf; stillSince = null;
+          detectMode = "armed"; gxBase = gxf; gyBase = gyf; stillSince = null; armTime = now;
           if (practiceOpen) setStateText("ready");
         }
       } else { stillSince = null; if (practiceOpen) setStateText("place"); }
@@ -207,6 +248,8 @@
     // Require the same bucket on CONFIRM_SAMPLES consecutive samples so a single
     // noisy reading can't fire at the very sensitive low trigger angle.
     if (detectMode !== "armed" || locked) return;
+    // Watchdog: a real performance can't stay armed forever (missed/wrong lift). Re-arm silently.
+    if (!isPractice && !calibrating && now - armTime > ARMED_TIMEOUT_MS) { beginWaiting(false); return; }
     const dx = gxf - gxBase, dy = gyf - gyBase;
     if (Math.hypot(dx, dy) >= tiltTrig()) {
       const bucket = Math.abs(dx) >= Math.abs(dy) ? ("ax" + (dx > 0 ? "+" : "-")) : ("ay" + (dy > 0 ? "+" : "-"));
@@ -374,7 +417,9 @@
     $("phone-continue").addEventListener("click", function () {
       const sel = screens.phone.querySelector(".phone-opt.selected");
       if (!sel) return;
-      try { localStorage.setItem(PHONE_KEY, sel.dataset.model); } catch (e) {}
+      const model = sel.dataset.model;
+      try { localStorage.setItem(PHONE_KEY, model); } catch (e) {}
+      applyPhoneModel(model);
       show("start");
     });
 
@@ -422,6 +467,9 @@
 
   bindEvents();
 
-  // Skip phone picker if user already selected a model
-  try { if (localStorage.getItem(PHONE_KEY)) show("start"); } catch (e) { show("start"); }
+  // Skip phone picker if user already selected a model — and apply its layout immediately.
+  try {
+    const savedModel = localStorage.getItem(PHONE_KEY);
+    if (savedModel) { applyPhoneModel(savedModel); show("start"); }
+  } catch (e) { show("start"); }
 })();

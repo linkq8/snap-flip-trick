@@ -1,7 +1,7 @@
 # Snap Flip — an iPhone magic trick 🎩📸
 
 A web app (PWA) that mimics a Snapchat camera and uses the **gyroscope** to reveal a number
-the audience chose (1–4), drawn in **yellow handwriting** over the captured photo — as if the
+the audience chose (1–4), drawn in **red handwriting** over the captured photo — as if the
 magician wrote it with the Snapchat pen.
 
 > ⚠️ **Not affiliated with Snap Inc.** This is a personal magic-trick / entertainment prop that
@@ -43,7 +43,7 @@ than reading rotation speed.
 - A live state line walks you through each lift: *Lay face-down & still → Holding… 2.0s → Armed,
   lift! → Detected: N*.
 - Adjust **Reveal speed**: lower degrees = the number appears with a smaller, faster lift. Default
-  is **10°** for a near-instant reveal.
+  is **4°** — a tiny, deniable lift triggers the reveal almost instantly.
 
 ---
 
