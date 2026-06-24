@@ -11,7 +11,8 @@
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const screens = { start: $("start-screen"), camera: $("camera-screen"), capture: $("capture-screen") };
+  const screens = { phone: $("phone-screen"), start: $("start-screen"), camera: $("camera-screen"), capture: $("capture-screen") };
+  const PHONE_KEY = "snapflip.phone";
   const video = $("video");
   const photo = $("photo");
   const revealPath = $("reveal-path");
@@ -250,6 +251,12 @@
   }
   function recordCalib(bucket) {
     const step = CALIB_STEPS[calibStep];
+    // Reject if this bucket already belongs to a previous step (prevents silent overwrite)
+    if (Object.prototype.hasOwnProperty.call(calibMap, bucket)) {
+      $("calib-instr").textContent = "⚠ Same direction — try lifting from " + step.label + " more decisively.";
+      setTimeout(() => { updateCalibUI(); beginWaiting(false); }, 1800);
+      return;
+    }
     calibMap[bucket] = step.num;
     $("calib-instr").textContent = "✓ Got it — that edge = " + step.num;
     calibStep++;
@@ -356,6 +363,21 @@
 
   // ===== Events =====
   function bindEvents() {
+    // Phone model picker
+    screens.phone.querySelectorAll(".phone-opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        screens.phone.querySelectorAll(".phone-opt").forEach(function (b) { b.classList.remove("selected"); });
+        btn.classList.add("selected");
+        $("phone-continue").classList.add("ready");
+      });
+    });
+    $("phone-continue").addEventListener("click", function () {
+      const sel = screens.phone.querySelector(".phone-opt.selected");
+      if (!sel) return;
+      try { localStorage.setItem(PHONE_KEY, sel.dataset.model); } catch (e) {}
+      show("start");
+    });
+
     $("start-btn").addEventListener("click", startApp);
     screens.start.addEventListener("click", (e) => { if (e.target.id !== "start-btn") startApp(); });
     $("capture-btn").addEventListener("click", capturePhoto);
@@ -399,4 +421,7 @@
   }
 
   bindEvents();
+
+  // Skip phone picker if user already selected a model
+  try { if (localStorage.getItem(PHONE_KEY)) show("start"); } catch (e) { show("start"); }
 })();
