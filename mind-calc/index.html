@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Calculator</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Calculator" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= CALCULATOR ================= -->
+  <section id="calc-screen" class="screen active">
+    <div class="display safe-top">
+      <div id="display-value" class="display-value">0</div>
+    </div>
+
+    <div class="keys safe-bottom">
+      <button class="key fn" data-action="clear">AC</button>
+      <button class="key fn" data-action="negate">±</button>
+      <button class="key fn" data-action="percent">%</button>
+      <button class="key op" data-op="÷">÷</button>
+
+      <button class="key num" data-num="7">7</button>
+      <button class="key num" data-num="8">8</button>
+      <button class="key num" data-num="9">9</button>
+      <button class="key op" data-op="×">×</button>
+
+      <button class="key num" data-num="4">4</button>
+      <button class="key num" data-num="5">5</button>
+      <button class="key num" data-num="6">6</button>
+      <button class="key op" data-op="−">−</button>
+
+      <button class="key num" data-num="1">1</button>
+      <button class="key num" data-num="2">2</button>
+      <button class="key num" data-num="3">3</button>
+      <button class="key op" data-op="+">+</button>
+
+      <button class="key num zero" data-num="0">0</button>
+      <button class="key num" data-action="decimal">.</button>
+      <button class="key op equals" data-op="=">=</button>
+    </div>
+
+    <!-- secret long-press zones -->
+    <div id="settings-hotspot" class="hotspot tl"></div>
+    <div id="reveal-hotspot" class="hotspot tr"></div>
+  </section>
+
+  <!-- ================= REVEAL OVERLAY ================= -->
+  <div id="reveal-overlay" class="reveal-overlay" hidden>
+
+    <!-- handwriting reveal layer (numbers) -->
+    <svg id="reveal-svg" viewBox="0 0 320 360" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <filter id="rough" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence id="rough-noise" type="fractalNoise" baseFrequency="0.013" numOctaves="2" seed="7" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
+      <g id="reveal-g" filter="url(#rough)">
+        <path id="reveal-path" fill="none" stroke="#FF3B30" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+        <circle id="pen-tip" r="5" fill="#FF3B30" opacity="0" />
+      </g>
+    </svg>
+
+    <!-- number mode framing -->
+    <div id="reveal-number" class="reveal-card">
+      <div class="reveal-caption" id="reveal-caption">My prediction was…</div>
+    </div>
+
+    <!-- elephant mode -->
+    <div id="reveal-elephant" class="reveal-elephant" hidden>
+      <div class="ele-art">
+        <svg viewBox="0 0 240 200" width="230" height="192" aria-hidden="true">
+          <!-- body -->
+          <ellipse cx="142" cy="100" rx="74" ry="56" fill="#9aa0a8"/>
+          <!-- head -->
+          <ellipse cx="74" cy="104" rx="50" ry="48" fill="#9aa0a8"/>
+          <!-- ear -->
+          <path d="M84 62 C50 54 36 100 58 132 C74 120 84 92 84 62 Z" fill="#868c95"/>
+          <!-- trunk -->
+          <path d="M40 100 C18 110 14 150 28 182 C33 192 47 192 50 181 C40 156 44 128 60 116 Z" fill="#9aa0a8"/>
+          <!-- tusk -->
+          <path d="M44 162 C49 174 60 178 66 172" fill="none" stroke="#f4f1e8" stroke-width="6" stroke-linecap="round"/>
+          <!-- legs -->
+          <g fill="#868c95">
+            <rect x="96" y="142" width="24" height="48" rx="9"/>
+            <rect x="132" y="146" width="24" height="44" rx="9"/>
+            <rect x="170" y="142" width="24" height="48" rx="9"/>
+          </g>
+          <rect x="96" y="142" width="24" height="48" rx="9" fill="#9aa0a8"/>
+          <rect x="170" y="142" width="24" height="48" rx="9" fill="#9aa0a8"/>
+          <!-- tail -->
+          <path d="M214 96 C228 104 228 124 220 134" fill="none" stroke="#868c95" stroke-width="5" stroke-linecap="round"/>
+          <!-- eye -->
+          <circle cx="60" cy="92" r="4.4" fill="#2b2e33"/>
+        </svg>
+      </div>
+      <div class="ele-text">
+        <div class="ele-line1">A <b>grey elephant</b></div>
+        <div class="ele-line2">from <b>Denmark</b> 🐘</div>
+      </div>
+    </div>
+
+    <div class="reveal-hint" id="reveal-hint">tap to dismiss</div>
+  </div>
+
+  <!-- ================= SECRET PANEL ================= -->
+  <section id="secret-panel" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <h2>Magician Setup 🎩</h2>
+        <button id="panel-close" class="panel-x" aria-label="close">✕</button>
+      </div>
+      <p class="panel-note">Secret — never show the audience. Pick a routine, then perform. Trigger the reveal with a long‑press on the <b>top‑right</b> corner of the calculator.</p>
+
+      <h3>Routine</h3>
+      <div class="seg" id="routine-seg">
+        <button class="seg-btn active" data-routine="elephant">🐘 Grey Elephant</button>
+        <button class="seg-btn" data-routine="number">🔢 Number</button>
+      </div>
+
+      <div id="number-options">
+        <h3>Forced number</h3>
+        <div class="seg" id="number-seg"></div>
+      </div>
+
+      <h3>Your cheat card</h3>
+      <div class="cheat" id="cheat-card"></div>
+
+      <div class="panel-actions">
+        <button id="test-reveal" class="ghost-btn">▶ Test reveal</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="digits.js"></script>
+  <script src="calc.js"></script>
+</body>
+</html>
