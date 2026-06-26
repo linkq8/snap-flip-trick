@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Truth Scan AI</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Truth Scan" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= START ================= -->
+  <section id="start-screen" class="screen active">
+    <div class="start-inner">
+      <div class="start-logo">
+        <svg viewBox="0 0 24 24" width="62" height="62"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>
+      </div>
+      <h1 class="start-title">Truth Scan <span class="ai-badge">AI</span></h1>
+      <p class="start-sub">Reads micro-expressions to detect lies</p>
+      <button id="start-btn" class="start-btn">▶</button>
+      <p id="start-error" class="start-error" hidden></p>
+    </div>
+  </section>
+
+  <!-- ================= SCANNER ================= -->
+  <section id="scan-screen" class="screen">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="mesh"></canvas>
+    <div id="scanline" class="scanline"></div>
+
+    <!-- top HUD -->
+    <div class="hud-top safe-top">
+      <div class="hud-title">TRUTH&nbsp;SCAN&nbsp;<b>AI</b></div>
+      <div class="hud-status"><span id="ai-dot" class="ai-dot"></span><span id="ai-status">INITIALIZING…</span></div>
+    </div>
+
+    <!-- live stress meter -->
+    <div class="meter">
+      <div class="meter-label">STRESS&nbsp;LEVEL</div>
+      <div class="meter-track"><div id="meter-fill" class="meter-fill"></div></div>
+      <div class="meter-readout"><span id="meter-pct">0%</span> · <span id="meter-bpm">-- BPM</span></div>
+    </div>
+
+    <!-- secret arm zones -->
+    <div id="zone-truth" class="armzone left"></div>
+    <div id="zone-lie" class="armzone right"></div>
+
+    <!-- analyze -->
+    <div class="scan-bottom safe-bottom">
+      <button id="analyze-btn" class="analyze-btn"><span class="ab-ring"></span><span class="ab-label">ANALYZE</span></button>
+      <div class="scan-hint">Ask a yes/no question, then Analyze</div>
+    </div>
+
+    <div id="secret-hotspot" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= VERDICT ================= -->
+  <section id="verdict-screen" class="screen">
+    <div id="verdict-inner" class="verdict-inner">
+      <div id="verdict-icon" class="verdict-icon"></div>
+      <div id="verdict-text" class="verdict-text">TRUTH</div>
+      <div id="verdict-conf" class="verdict-conf">94% confidence</div>
+    </div>
+    <div class="reveal-hint" id="verdict-hint">tap to scan again</div>
+    <div id="secret-hotspot-2" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= SECRET PANEL ================= -->
+  <section id="secret-panel" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <h2>Magician Setup 🎩</h2>
+        <button id="panel-close" class="panel-x" aria-label="close">✕</button>
+      </div>
+      <p class="panel-note">Secret. The AI face mesh is real (it impresses), but YOU set the verdict: tap the <b>left half</b> to arm <b>TRUTH</b>, the <b>right half</b> to arm <b>LIE</b>. The little status dot (top-right) glows green/red so only you know. Then press <b>Analyze</b>.</p>
+
+      <h3>Default verdict (when un-armed)</h3>
+      <div class="seg" id="mode-seg">
+        <button class="seg-btn active" data-mode="truth">Truth</button>
+        <button class="seg-btn" data-mode="lie">Lie</button>
+        <button class="seg-btn" data-mode="alt">Alternate</button>
+      </div>
+
+      <h3>Armed now</h3>
+      <div class="armed-now">Next verdict: <b id="armed-label">TRUTH (default)</b></div>
+
+      <h3>Options</h3>
+      <label class="opt"><span>Show the status dot tell</span><input type="checkbox" id="opt-dot" checked></label>
+
+      <div class="panel-actions">
+        <button id="test-truth" class="ghost-btn">▶ Test “Truth”</button>
+        <button id="test-lie" class="ghost-btn danger">▶ Test “Lie”</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="ai.js"></script>
+  <script src="lie.js"></script>
+</body>
+</html>
