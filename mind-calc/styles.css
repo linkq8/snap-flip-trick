@@ -10,6 +10,7 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
+.demo-static *, .demo-static *::before, .demo-static *::after { animation: none !important; transition: none !important; }
 
 html, body {
   margin: 0; padding: 0; height: 100%;

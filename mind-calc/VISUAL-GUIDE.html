@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>الآلة الحاسبة قارئة الأفكار — دليل مصوّر</title>
+<style>
+  @page { size: A4; margin: 13mm 12mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root { --orange:#ff9f0a; --ink:#15151a; --muted:#6b6b76; --line:#e6e6ec; --soft:#f7f7f9; --dark:#1c1c1e; }
+  html, body { margin:0; padding:0; }
+  body { font-family:"SF Arabic","Geeza Pro","Noto Naskh Arabic","Tahoma",system-ui,sans-serif; color:var(--ink); line-height:1.7; font-size:12.5px; background:#fff; }
+  .page { padding:0 2mm; }
+  .page-break { page-break-before: always; }
+
+  .hero { display:flex; align-items:center; gap:15px; background:var(--dark); border-radius:18px; padding:15px 20px; margin-bottom:15px; }
+  .hero h1 { margin:0; font-size:22px; font-weight:800; color:#fff; }
+  .hero p { margin:3px 0 0; font-size:12px; color:rgba(255,255,255,0.6); font-weight:600; }
+
+  h2 { font-size:15px; font-weight:800; margin:14px 0 12px; color:var(--ink); display:flex; align-items:center; gap:9px; }
+  h2 .n { width:25px; height:25px; border-radius:8px; background:var(--orange); color:#1c1c1e; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+
+  .steps2 { display:flex; gap:16px; }
+  .step { flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  /* phone frame */
+  .phone { width:172px; background:#000; border:3px solid #2b2b30; border-radius:26px; padding:6px; position:relative; box-shadow:0 8px 22px rgba(0,0,0,0.18); }
+  .phone .notch { position:absolute; top:9px; left:50%; transform:translateX(-50%); width:48px; height:7px; background:#2b2b30; border-radius:5px; z-index:2; }
+  .phone img { width:100%; display:block; border-radius:21px; }
+  .cap { margin-top:11px; }
+  .cap .badge { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--ink); color:#fff; font-weight:800; font-size:13px; margin-bottom:5px; }
+  .cap h3 { margin:0 0 4px; font-size:14px; font-weight:800; color:#000; }
+  .cap p { margin:0; font-size:11.5px; color:#444; line-height:1.6; padding:0 4px; }
+  .cap b { color:#000; }
+  .cap .corner { color:var(--orange); font-weight:700; }
+
+  .callout { background:#fff7e9; border:1px solid #f0d79a; border-radius:11px; padding:10px 14px; margin:13px 0 0; font-size:12px; }
+  .callout.tip { background:#eef6ef; border-color:#cfe6cf; }
+  .callout b { color:#000; }
+
+  .mini { display:flex; gap:12px; margin-top:4px; }
+  .mini > div { flex:1; background:var(--soft); border:1px solid var(--line); border-radius:11px; padding:10px 13px; font-size:11.5px; }
+  .mini b { color:#000; }
+  .mini .tag { display:inline-block; padding:1px 7px; border-radius:6px; font-size:11px; font-weight:700; margin-bottom:3px; }
+  .tag.tl { background:#d7e7ff; color:#1a4ea8; } .tag.tr { background:#ffe6c2; color:#9a5b00; }
+
+  .ah { display:flex; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--line); }
+  .ah:last-child { border-bottom:0; }
+  .ah .ic { flex:0 0 auto; width:30px; height:30px; border-radius:8px; background:var(--dark); display:flex; align-items:center; justify-content:center; color:var(--orange); font-size:15px; }
+  .ah .body b { color:#000; font-size:12.5px; } .ah .body p { margin:1px 0 0; font-size:11px; color:var(--muted); }
+
+  .foot { margin-top:13px; padding-top:8px; border-top:1px solid var(--line); font-size:10px; color:var(--muted); display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+
+<!-- ===== PAGE 1 ===== -->
+<div class="page">
+  <div class="hero">
+    <svg viewBox="0 0 512 512" width="50" height="50" aria-hidden="true">
+      <rect width="512" height="512" rx="96" fill="#000"/>
+      <rect x="96" y="92" width="320" height="60" rx="14" fill="#2c2c2e"/>
+      <text x="398" y="138" text-anchor="end" font-family="Helvetica" font-size="42" font-weight="300" fill="#e6e6ea">0</text>
+      <g>
+        <circle cx="140" cy="220" r="26" fill="#333"/><circle cx="216" cy="220" r="26" fill="#333"/><circle cx="292" cy="220" r="26" fill="#333"/><circle cx="372" cy="220" r="26" fill="#ff9f0a"/>
+        <circle cx="140" cy="298" r="26" fill="#333"/><circle cx="216" cy="298" r="26" fill="#333"/><circle cx="292" cy="298" r="26" fill="#333"/><circle cx="372" cy="298" r="26" fill="#ff9f0a"/>
+        <circle cx="140" cy="376" r="26" fill="#333"/><circle cx="216" cy="376" r="26" fill="#333"/><circle cx="292" cy="376" r="26" fill="#333"/><circle cx="372" cy="376" r="26" fill="#ff9f0a"/>
+      </g>
+    </svg>
+    <div>
+      <h1>الآلة الحاسبة قارئة الأفكار — دليل مصوّر</h1>
+      <p>كيف تستخدم التطبيق خطوة بخطوة، بالصور الحقيقية للشاشة</p>
+    </div>
+  </div>
+
+  <h2><span class="n">A</span> التحضير</h2>
+  <div class="steps2">
+    <div class="step">
+      <div class="phone"><span class="notch"></span><img src="guide-assets/shot-calc.png" alt="الآلة الحاسبة"></div>
+      <div class="cap">
+        <span class="badge">١</span>
+        <h3>آلة حاسبة عادية تمامًا</h3>
+        <p>افتح التطبيق — يبدو ويعمل كأي آلة حاسبة. ابدأ بعملية حقيقية أمام الجمهور (<b>٧ × ٨ = ٥٦</b>) ليطمئنوا أنها عادية، ثم ابدأ الخدعة.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="phone"><span class="notch"></span><img src="guide-assets/shot-panel.png" alt="لوحة الساحر"></div>
+      <div class="cap">
+        <span class="badge">٢</span>
+        <h3>لوحة الساحر السرية</h3>
+        <p>اضغط مطوّلًا (~٠٫٧ث) على <span class="corner">الزاوية العلوية اليسرى ⚙</span> لتفتحها. اختر الوضع (فيل / رقم) وراجع <b>بطاقة الغش</b>. سرية — لا تظهر للجمهور.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    💡 <b>السرّ:</b> العمليات الحسابية إجبار رياضي — مهما اختار الجمهور يصلون <b>دائمًا لنفس الناتج</b>،
+    ويستطيعون الحساب بأنفسهم على آلتك فتبدو الخدعة عادلة تمامًا. لا حسّاسات، لا معايرة، لا شيء يفشل.
+  </div>
+
+  <div class="foot"><span>الآلة الحاسبة قارئة الأفكار · دليل مصوّر</span><span>صفحة ١ من ٢</span></div>
+</div>
+
+<!-- ===== PAGE 2 ===== -->
+<div class="page page-break">
+  <h2><span class="n">B</span> لحظة الكشف</h2>
+  <div class="steps2">
+    <div class="step">
+      <div class="phone"><span class="notch"></span><img src="guide-assets/shot-elephant.png" alt="كشف الفيل"></div>
+      <div class="cap">
+        <span class="badge">٣</span>
+        <h3>وجِّه الخطوات ثم اكشف 🐘</h3>
+        <p>بعد أن يفكّر الجمهور (يصلون إلى «فيل رمادي من الدنمارك»)، اضغط مطوّلًا (~٠٫٥ث) على <span class="corner">الزاوية العلوية اليمنى ✨</span> فيظهر الكشف.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="phone"><span class="notch"></span><img src="guide-assets/shot-number5.png" alt="كشف الرقم"></div>
+      <div class="cap">
+        <span class="badge">٤</span>
+        <h3>أو كشف الرقم 🔢</h3>
+        <p>في وضع الرقم تُرسم «نبوءتك» بخط اليد (٥ / ٧ / ١٠). المس أي مكان على الشاشة لإخفاء الكشف والعودة للآلة.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="n">C</span> الإيماءات السرية باختصار</h2>
+  <div class="mini">
+    <div><span class="tag tl">⚙ يسار</span><br><b>الزاوية العلوية اليسرى</b> — ضغطة مطوّلة تفتح لوحة الإعداد وبطاقة الغش.</div>
+    <div><span class="tag tr">✨ يمين</span><br><b>الزاوية العلوية اليمنى</b> — ضغطة مطوّلة تُطلق الكشف أثناء العرض.</div>
+    <div><span class="tag" style="background:#eee;color:#444">✕ لمسة</span><br><b>أي مكان على الكشف</b> — يُخفيه ويعود للآلة.</div>
+  </div>
+
+  <h2><span class="n">D</span> التشغيل بكامل الشاشة (Add to Home)</h2>
+  <div class="ah"><span class="ic">↑</span><div class="body"><b>١) Safari ← زر المشاركة (□↑)</b><p>افتح الرابط في سفاري واضغط زر المشاركة بالأسفل.</p></div></div>
+  <div class="ah"><span class="ic">＋</span><div class="body"><b>٢) «Add to Home Screen»</b><p>اختره، سمِّه «Calculator»، ثم Add.</p></div></div>
+  <div class="ah"><span class="ic">▣</span><div class="body"><b>٣) افتحه من الأيقونة</b><p>يعمل بكامل الشاشة كآلة حاسبة حقيقية بلا شريط متصفح.</p></div></div>
+
+  <div class="callout tip">✅ للجمهور لا يظهر سوى آلة حاسبة عادية تمامًا — الزوايا السرية والكشف لا يظهران إلا حين تريد أنت.</div>
+
+  <div class="foot"><span>ليست تابعة لـ Apple · لأغراض الترفيه</span><span>صفحة ٢ من ٢</span></div>
+</div>
+
+</body>
+</html>

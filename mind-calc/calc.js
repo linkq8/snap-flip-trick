@@ -159,7 +159,7 @@
   // 2) REVEAL
   // ============================================================
   let drawing = false;
-  function showReveal(routine) {
+  function showReveal(routine, instant) {
     routine = routine || config.routine;
     overlay.hidden = false;
     const eleEl = $("reveal-elephant");
@@ -177,9 +177,13 @@
       const ans = activePreset().answer;
       clearDraw(revealPath, penTip);
       setNumber(revealPath, revealG, String(ans));
-      // small delay so the caption lands first
-      drawing = true;
-      setTimeout(() => { animateDraw(revealPath, penTip, 420, () => { drawing = false; }); }, 360);
+      if (instant) {
+        revealPath.style.strokeDasharray = "none"; revealPath.style.strokeDashoffset = "0";
+      } else {
+        // small delay so the caption lands first
+        drawing = true;
+        setTimeout(() => { animateDraw(revealPath, penTip, 420, () => { drawing = false; }); }, 360);
+      }
     }
   }
   function hideReveal() {
@@ -267,10 +271,25 @@
     });
   }
 
-  if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator && !/[?&]demo=/.test(location.search)) {
     window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
   }
 
   refresh();
   bindEvents();
+
+  // Documentation screenshots only — drive a state via ?demo=… (harmless in normal use).
+  try {
+    const demo = new URLSearchParams(location.search).get("demo");
+    if (demo) {
+      document.documentElement.classList.add("demo-static"); // freeze entrance animations for crisp shots
+      setTimeout(function () {
+        if (demo === "calc") { inputDigit("7"); handleOperator("×"); inputDigit("8"); handleOperator("="); }
+        else if (demo === "panel") openPanel();
+        else if (demo === "elephant") { config.routine = "elephant"; showReveal("elephant", true); }
+        else if (demo === "number5") { config.routine = "number"; config.preset = "n5"; showReveal("number", true); }
+        else if (demo === "number10") { config.routine = "number"; config.preset = "n10"; showReveal("number", true); }
+      }, 250);
+    }
+  } catch (e) {}
 })();
