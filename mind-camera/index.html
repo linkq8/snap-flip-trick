@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Camera</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Camera" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= START / PERMISSION ================= -->
+  <section id="start-screen" class="screen active">
+    <div class="start-inner">
+      <div class="start-cam">
+        <svg viewBox="0 0 24 24" width="64" height="64"><rect x="3" y="6" width="18" height="13" rx="3"/><circle cx="12" cy="12.5" r="3.6"/><path d="M8 6l1.5-2h5L16 6"/></svg>
+      </div>
+      <h1 class="start-title">Tap to start</h1>
+      <p class="start-sub">Allow camera access</p>
+      <button id="start-btn" class="start-btn">▶</button>
+      <p id="start-error" class="start-error" hidden></p>
+    </div>
+  </section>
+
+  <!-- ================= CAMERA ================= -->
+  <section id="camera-screen" class="screen">
+    <video id="video" playsinline autoplay muted></video>
+
+    <!-- top bar (cosmetic) -->
+    <div class="cam-top safe-top">
+      <button class="cam-ic" aria-label="flash"><svg viewBox="0 0 24 24"><path d="M13 2L5 13h5l-1 9 8-12h-5z"/></svg></button>
+      <span class="cam-mode">PHOTO</span>
+      <button id="flip-btn" class="cam-ic" aria-label="flip"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 13-3l2 2"/><path d="M20 15a8 8 0 0 1-13 3l-2-2"/><polyline points="19,4 19,8 15,8"/><polyline points="5,20 5,16 9,16"/></svg></button>
+    </div>
+
+    <!-- secret tap zones: left = rank, right = suit (invisible) -->
+    <div id="zone-rank" class="tapzone left"></div>
+    <div id="zone-suit" class="tapzone right"></div>
+
+    <!-- disguised camera-info readout (the magician reads the card here) -->
+    <div id="exif" class="exif safe-bottomx"><span id="exif-card">A♠</span><span class="exif-dim">· ƒ2.8 · 1/120 · ISO100</span></div>
+
+    <!-- shutter -->
+    <div class="cam-bottom safe-bottom">
+      <div class="thumb"></div>
+      <button id="shutter" class="shutter" aria-label="capture"><span></span></button>
+      <button id="flip-btn2" class="cam-ic flip2" aria-label="flip"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 13-3l2 2"/><path d="M20 15a8 8 0 0 1-13 3l-2-2"/><polyline points="19,4 19,8 15,8"/><polyline points="5,20 5,16 9,16"/></svg></button>
+    </div>
+
+    <div id="secret-hotspot" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= REVEAL ================= -->
+  <section id="reveal-screen" class="screen">
+    <canvas id="photo"></canvas>
+    <div id="card-holder" class="card-holder"></div>
+    <button id="reveal-close" class="reveal-close safe-top" aria-label="close">
+      <svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+    </button>
+    <div class="reveal-hint" id="reveal-hint">tap to retake</div>
+    <div id="secret-hotspot-2" class="secret-hotspot"></div>
+  </section>
+
+  <!-- ================= SECRET PANEL ================= -->
+  <section id="secret-panel" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <h2>Magician Setup 🎩</h2>
+        <button id="panel-close" class="panel-x" aria-label="close">✕</button>
+      </div>
+      <p class="panel-note">Secret. Hold the phone facing you, hear their card, then set it: tap the <b>left half</b> to change the <b>rank</b>, the <b>right half</b> to change the <b>suit</b>. The tiny readout (bottom-left, looks like camera info) shows the current card. Press the shutter to reveal it on the photo.</p>
+
+      <h3>Set the card here too</h3>
+      <div class="picker">
+        <div class="pick-row" id="pick-rank"></div>
+        <div class="pick-row suits" id="pick-suit"></div>
+      </div>
+      <div class="current">Current: <b id="current-card">A♠</b></div>
+
+      <h3>Options</h3>
+      <label class="opt"><span>Show the readout label</span><input type="checkbox" id="opt-readout" checked></label>
+      <label class="opt"><span>Force a fixed card (prediction)</span><input type="checkbox" id="opt-force"></label>
+
+      <div class="panel-actions">
+        <button id="test-reveal" class="ghost-btn">▶ Test reveal</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="cards.js"></script>
+  <script src="card.js"></script>
+</body>
+</html>
