@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>الآلة الحاسبة قارئة الأفكار — دليل الساحر</title>
+<style>
+  @page { size: A4; margin: 13mm 12mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root {
+    --orange: #ff9f0a;
+    --ink: #15151a;
+    --muted: #6b6b76;
+    --line: #e6e6ec;
+    --soft: #f7f7f9;
+    --dark: #1c1c1e;
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic", "Tahoma", system-ui, sans-serif;
+    color: var(--ink); line-height: 1.7; font-size: 12.5px; background: #fff;
+  }
+  .page { padding: 0 2mm; }
+  .page-break { page-break-before: always; }
+
+  .hero { display: flex; align-items: center; gap: 16px; background: var(--dark); border-radius: 18px; padding: 16px 20px; margin-bottom: 16px; }
+  .hero .ic { flex: 0 0 auto; }
+  .hero h1 { margin: 0; font-size: 23px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+  .hero p { margin: 3px 0 0; font-size: 12.5px; color: rgba(255,255,255,0.6); font-weight: 600; }
+
+  h2 { font-size: 15px; font-weight: 800; margin: 17px 0 9px; color: var(--ink); display: flex; align-items: center; gap: 9px; }
+  h2 .n { flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: var(--orange); color: #1c1c1e; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
+  p.lead { color: #3a3a44; margin: 0 0 6px; }
+
+  .secret-box { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; }
+  .secret-box b { color: #000; }
+  .formula { display: inline-block; background: var(--dark); color: var(--orange); font-family: "SF Mono", Menlo, monospace; font-size: 13px; padding: 6px 12px; border-radius: 8px; margin-top: 6px; direction: ltr; }
+
+  .routines { display: flex; gap: 12px; }
+  .routine { flex: 1; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .routine .rt-head { padding: 10px 14px; font-size: 14px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .routine.r1 .rt-head { background: #5b6470; }
+  .routine.r2 .rt-head { background: var(--orange); color: #1c1c1e; }
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 10px 12px; }
+  ol.steps li { counter-increment: s; position: relative; padding: 5px 30px 5px 6px; font-size: 12px; line-height: 1.55; }
+  ol.steps li::before { content: counter(s); position: absolute; right: 6px; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: #2b2b33; color: #fff; font-size: 10.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  ol.steps li b { color: #000; }
+  .rt-answer { margin: 4px 12px 12px; padding: 9px 12px; background: #fff7e9; border: 1px solid #f0d79a; border-radius: 9px; font-size: 12.5px; }
+  .rt-answer b { color: #b9760a; }
+
+  .callout { background: #fff7e9; border: 1px solid #f0d79a; border-radius: 11px; padding: 11px 14px; margin: 11px 0; font-size: 12px; }
+  .callout.tip { background: #eef6ef; border-color: #cfe6cf; }
+
+  /* gesture diagram */
+  .gesture-wrap { display: flex; gap: 18px; align-items: center; background: var(--soft); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .gesture-legend { flex: 1; }
+  .gesture-legend .row { display: flex; align-items: flex-start; gap: 11px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .gesture-legend .row:last-child { border-bottom: 0; }
+  .gesture-legend .tag { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .tag.tl { background: #d7e7ff; } .tag.tr { background: #ffe6c2; }
+  .gesture-legend b { color: #000; font-size: 13px; }
+  .gesture-legend span { font-size: 11.5px; color: var(--muted); }
+
+  .ah { display: flex; gap: 11px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .ah:last-child { border-bottom: 0; }
+  .ah .ic { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px; background: var(--dark); display: flex; align-items: center; justify-content: center; color: var(--orange); font-size: 17px; }
+  .ah .body b { color: #000; font-size: 13px; }
+  .ah .body p { margin: 1px 0 0; font-size: 11.5px; color: var(--muted); }
+
+  .cheat-quick { display: flex; gap: 12px; }
+  .cheat-quick > div { flex: 1; background: var(--dark); border-radius: 12px; padding: 12px 14px; color: #e6e6ea; }
+  .cheat-quick h4 { margin: 0 0 6px; font-size: 12.5px; color: var(--orange); }
+  .cheat-quick .big { font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; }
+  .cheat-quick small { color: #9a9aa5; font-size: 11px; }
+
+  .foot { margin-top: 14px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 ============ -->
+<div class="page">
+  <div class="hero">
+    <span class="ic">
+      <svg viewBox="0 0 512 512" width="56" height="56" aria-hidden="true">
+        <rect width="512" height="512" rx="96" fill="#000"/>
+        <rect x="96" y="92" width="320" height="60" rx="14" fill="#2c2c2e"/>
+        <text x="398" y="138" text-anchor="end" font-family="Helvetica, Arial" font-size="42" font-weight="300" fill="#e6e6ea">0</text>
+        <g>
+          <circle cx="140" cy="220" r="28" fill="#333"/><circle cx="216" cy="220" r="28" fill="#333"/><circle cx="292" cy="220" r="28" fill="#333"/><circle cx="372" cy="220" r="28" fill="#ff9f0a"/>
+          <circle cx="140" cy="300" r="28" fill="#333"/><circle cx="216" cy="300" r="28" fill="#333"/><circle cx="292" cy="300" r="28" fill="#333"/><circle cx="372" cy="300" r="28" fill="#ff9f0a"/>
+          <circle cx="140" cy="380" r="28" fill="#333"/><circle cx="216" cy="380" r="28" fill="#333"/><circle cx="292" cy="380" r="28" fill="#333"/><circle cx="372" cy="380" r="28" fill="#ff9f0a"/>
+        </g>
+      </svg>
+    </span>
+    <div>
+      <h1>الآلة الحاسبة قارئة الأفكار</h1>
+      <p>دليل الساحر — خدعتان ذاتيّتا العمل تعملان ١٠٠٪ بلا حسّاسات</p>
+    </div>
+  </div>
+
+  <h2><span class="n">؟</span> الفكرة والسرّ</h2>
+  <div class="secret-box">
+    التطبيق يبدو ويعمل <b>كآلة حاسبة iOS عادية تمامًا</b> — وهي فعلًا تحسب. لكنها تخفي خدعتين.
+    <b>السرّ:</b> سلسلة العمليات الحسابية <b>إجبار رياضي</b> — مهما كان رقم البداية يصل الجمهور
+    <b>دائمًا لنفس الناتج</b>. وبما أن الجمهور يستطيع الحساب بنفسه على آلتك، تبدو الخدعة عادلة تمامًا:
+    «احسبها أنت». لا حسّاسات، لا معايرة، لا إدخال سرّي — لا شيء يمكن أن يفشل.
+    <div class="formula">(n × 2 + C) ÷ 2 − n = C ÷ 2 &nbsp;&nbsp;⟸ ثابت دائمًا</div>
+  </div>
+
+  <h2><span class="n">٢</span> الوضعان — الخطوات (يقودها الساحر شفهيًا)</h2>
+  <div class="routines">
+    <div class="routine r1">
+      <div class="rt-head">🐘 الوضع ١: الفيل الرمادي</div>
+      <ol class="steps">
+        <li>«فكّر برقم من <b>١ إلى ٩</b>» (سرًّا)</li>
+        <li>«اضربه <b>× ٩</b>»</li>
+        <li>«إن صار رقمين، اجمع الخانتين» ← ٩</li>
+        <li>«اطرح <b>٥</b>» ← ٤</li>
+        <li>«حوّله لحرف: ١=A، ٤=D…» ← <b>D</b></li>
+        <li>«فكّر بدولة تبدأ به» ← Denmark</li>
+        <li>«خذ حرفها الثاني (e)، فكّر بحيوان» ← Elephant</li>
+        <li>«تخيّل لون الفيل» ← رمادي</li>
+      </ol>
+      <div class="rt-answer">يصلون دائمًا إلى: <b>فيل رمادي 🐘 من الدنمارك</b></div>
+    </div>
+
+    <div class="routine r2">
+      <div class="rt-head">🔢 الوضع ٢: الرقم المستحيل</div>
+      <ol class="steps">
+        <li>«فكّر بأي رقم» (سرًّا)</li>
+        <li>«اضربه <b>× ٢</b>»</li>
+        <li>«أضف <b>١٠</b>» (أو ١٤ / ٢٠ حسب النمط)</li>
+        <li>«اقسم على <b>٢</b>»</li>
+        <li>«اطرح رقمك الأصلي»</li>
+      </ol>
+      <div class="rt-answer">يصلون دائمًا إلى: <b>٥</b> (أو ٧ / ١٠) — تُرسم كنبوءة بخط اليد</div>
+      <div style="padding:0 12px 12px;font-size:11px;color:#6b6b76">غيّر النمط بين العروض ليختلف الرقم وتُكرّر الخدعة.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    💡 ابدأ العرض بإجراء عملية حقيقية أمامهم (مثل <b>٧ × ٨ = ٥٦</b>) ليطمئنوا أنها آلة عادية، ثم ابدأ الخدعة.
+  </div>
+
+  <div class="foot"><span>الآلة الحاسبة قارئة الأفكار · دليل الساحر</span><span>صفحة ١ من ٢</span></div>
+</div>
+
+<!-- ============ PAGE 2 ============ -->
+<div class="page page-break">
+  <h2><span class="n">٣</span> الإيماءات السرية</h2>
+  <div class="gesture-wrap">
+    <!-- phone diagram with the two secret corners -->
+    <svg width="140" height="220" viewBox="0 0 140 220" aria-hidden="true">
+      <rect x="20" y="10" width="100" height="200" rx="16" fill="#000" stroke="#15151a" stroke-width="2"/>
+      <rect x="44" y="34" width="52" height="22" rx="5" fill="#2c2c2e"/>
+      <text x="92" y="50" text-anchor="end" font-family="Helvetica" font-size="14" fill="#e6e6ea">0</text>
+      <g>
+        <circle cx="40" cy="92" r="8" fill="#333"/><circle cx="60" cy="92" r="8" fill="#333"/><circle cx="80" cy="92" r="8" fill="#333"/><circle cx="100" cy="92" r="8" fill="#ff9f0a"/>
+        <circle cx="40" cy="116" r="8" fill="#333"/><circle cx="60" cy="116" r="8" fill="#333"/><circle cx="80" cy="116" r="8" fill="#333"/><circle cx="100" cy="116" r="8" fill="#ff9f0a"/>
+        <circle cx="40" cy="140" r="8" fill="#333"/><circle cx="60" cy="140" r="8" fill="#333"/><circle cx="80" cy="140" r="8" fill="#333"/><circle cx="100" cy="140" r="8" fill="#ff9f0a"/>
+        <rect x="32" y="156" width="36" height="16" rx="8" fill="#333"/><circle cx="80" cy="164" r="8" fill="#333"/><circle cx="100" cy="164" r="8" fill="#ff9f0a"/>
+      </g>
+      <!-- secret corner markers -->
+      <circle cx="36" cy="26" r="13" fill="#2f6fed"/><text x="36" y="31" text-anchor="middle" font-size="13" fill="#fff">⚙</text>
+      <circle cx="104" cy="26" r="13" fill="#ff9f0a"/><text x="104" y="31" text-anchor="middle" font-size="13" fill="#1c1c1e">✨</text>
+    </svg>
+    <div class="gesture-legend">
+      <div class="row">
+        <span class="tag tl">⚙</span>
+        <span><b>إعداد الساحر — الزاوية العلوية اليسرى</b><br><span>ضغطة مطوّلة (~٠٫٧ث) تفتح اللوحة السرية: اختيار الوضع والنمط + <b>بطاقة الغش</b> + زر تجربة.</span></span>
+      </div>
+      <div class="row">
+        <span class="tag tr">✨</span>
+        <span><b>إطلاق الكشف — الزاوية العلوية اليمنى</b><br><span>ضغطة مطوّلة (~٠٫٥ث) أثناء العرض تُظهر الكشف (الفيل أو الرقم).</span></span>
+      </div>
+      <div class="row">
+        <span class="tag" style="background:#eee">✕</span>
+        <span><b>إخفاء الكشف</b><br><span>المس أي مكان على شاشة الكشف للعودة للآلة.</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="callout tip">✅ للجمهور لا يظهر سوى آلة حاسبة عادية تمامًا — الزوايا السرية غير مرئية.</div>
+
+  <h2><span class="n">٤</span> نصائح الأداء</h2>
+  <div class="callout">
+    🐘 <b>الفيل:</b> نسبة ضئيلة قد تختار دولة غير «الدنمارك» (مثل Dominican) أو حيوانًا غير «Elephant».
+    عالِجها بثقة: «دولة <b>مشهورة</b>، أول ما يخطر ببالك» — وغالبًا ستكون الدنمارك والفيل.
+    <br>🔢 <b>الرقم:</b> لا يفشل أبدًا؛ بدّل النمط (٥ / ٧ / ١٠) بين العروض.
+  </div>
+
+  <h2><span class="n">★</span> التشغيل بكامل الشاشة (Add to Home)</h2>
+  <div class="ah">
+    <span class="ic">↑</span>
+    <div class="body"><b>١) افتح الرابط في Safari</b><p>اضغط زرّ المشاركة (المربّع مع السهم) في الأسفل.</p></div>
+  </div>
+  <div class="ah">
+    <span class="ic">＋</span>
+    <div class="body"><b>٢) «Add to Home Screen»</b><p>اختره من القائمة، وسمِّه «Calculator» ثم اضغط Add.</p></div>
+  </div>
+  <div class="ah">
+    <span class="ic">▣</span>
+    <div class="body"><b>٣) افتحه من الأيقونة</b><p>يعمل بكامل الشاشة كآلة حاسبة حقيقية بلا شريط متصفح.</p></div>
+  </div>
+
+  <h2><span class="n">⚡</span> بطاقة الغش السريعة</h2>
+  <div class="cheat-quick">
+    <div>
+      <h4>🐘 الفيل</h4>
+      <div>×٩ ← اجمع الخانتين ← −٥ ← حرف ← دولة ← حيوان ← لون</div>
+      <div class="big">فيل رمادي · الدنمارك</div>
+    </div>
+    <div>
+      <h4>🔢 الرقم</h4>
+      <div>×٢ ← +١٠ ← ÷٢ ← اطرح الأصل</div>
+      <div class="big">= ٥ <small>(أو ٧ / ١٠)</small></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ليست تابعة لـ Apple · لأغراض الترفيه</span><span>صفحة ٢ من ٢</span></div>
+</div>
+
+</body>
+</html>
